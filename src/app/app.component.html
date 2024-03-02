@@ -1,0 +1,16 @@
+<ng-container *ngIf="isLoadingComplete; else loading">
+    <div [ngClass]="{'blank-page': hideHeader()}" [class.dark-theme]="isDarkTheme()">
+        <div class="main-content d-flex flex-column hide-sidebar" [ngClass]="{'active': isToggled}"
+            style="padding-left: 25px;">
+            <app-header></app-header>
+            <router-outlet></router-outlet>
+            <div class="flex-grow-1"></div>
+            <app-footer></app-footer>
+        </div>
+    </div>
+</ng-container>
+<ng-template #loading>
+    <div class="spinner-container">
+        <mat-spinner></mat-spinner>
+    </div>
+</ng-template>
