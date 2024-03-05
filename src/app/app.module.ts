@@ -24,6 +24,8 @@ import { DashboardComponent } from './dashboard/dashboard.component';
 import { AppEffects } from './core/app-store/app.effects';
 import { AppInitService } from './core/services/app-init-service';
 import { CustomRouterStateSerilizer } from './core/app-store/router-state.model';
+import { ChatComponent } from './chat/chat.component';
+import { ChatSidebarComponent } from './chat/chat-sidebar/chat-sidebar.component';
 
 
 @NgModule({
@@ -36,6 +38,8 @@ import { CustomRouterStateSerilizer } from './core/app-store/router-state.model'
         InternalErrorComponent,
 
         DashboardComponent,
+        ChatComponent,
+        ChatSidebarComponent
 
     ],
     imports: [
