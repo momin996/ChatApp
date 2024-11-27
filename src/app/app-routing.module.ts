@@ -7,12 +7,14 @@ import { NotFoundComponent } from './core/components/not-found/not-found.compone
 import { DashboardComponent } from './dashboard/dashboard.component';
 import { authGaurd } from './auth/gaurds/auth.guard';
 import { noAuthGaurd } from './auth/gaurds/no-auth.guard';
+import { ChatComponent } from './chat/chat.component';
 
 const routes: Routes = [
     {
         path: '',
         pathMatch: 'full',
-        redirectTo: 'auth/login'
+        // redirectTo: 'auth/login'
+        redirectTo: 'chat'
     },
     
     {
@@ -24,7 +26,13 @@ const routes: Routes = [
     {
         path: 'dashboard',
         component: DashboardComponent,
-        canActivate: [authGaurd]
+        // canActivate: [authGaurd]
+    },
+
+    {
+        path: 'chat',
+        component: ChatComponent,
+        // canActivate: [authGaurd]
     },
 
     {path: 'error-500', component: InternalErrorComponent},
