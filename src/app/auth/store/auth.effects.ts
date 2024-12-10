@@ -129,7 +129,7 @@ export class AuthEffects {
                     route = returnUrl;
                     console.log('Routing to : ' + route);
                 }
-                if(route.includes('auth')) route = '/dashboard';
+                if(route.includes('auth')) route = '/chat';
                 console.log('Routing to : ' + route);
                 this.router.navigateByUrl(route);
             })

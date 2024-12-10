@@ -3,7 +3,7 @@ export const Environment = {
 
     production: false,
     
-    apiUrl: 'https://localhost:44322/api',
+    apiUrl: 'https://localhost:7189/api',
 
     appVersion: `v1-dev`,
     

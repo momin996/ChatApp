@@ -10,7 +10,8 @@ const initialAuthState: AuthState = {
     tokenStatus: TokenStatus.PENDING,
     isLoading: false,
     isError: false,
-    error: null
+    error: null,
+    user: null
 }
 
 const reducer = createReducer(
@@ -47,6 +48,20 @@ const reducer = createReducer(
           tokenStatus: TokenStatus.INVALID,
           isError: true,
           error: action.error
+        })
+    ),
+
+    on(
+        AuthActions.userSuccessAction,
+        (state, action): AuthState => ({
+          ...state,
+          user: action.user,
+        })
+      ),
+    on(
+        AuthActions.userFailureAction,
+        (): AuthState => ({
+            ...initialAuthState,
         })
     ),
 

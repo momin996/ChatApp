@@ -13,8 +13,8 @@ const routes: Routes = [
     {
         path: '',
         pathMatch: 'full',
-        // redirectTo: 'auth/login'
-        redirectTo: 'chat'
+        redirectTo: 'auth/login'
+        // redirectTo: 'chat'
     },
     
     {
@@ -23,16 +23,16 @@ const routes: Routes = [
         canActivate: [noAuthGaurd]
     },
     
-    {
-        path: 'dashboard',
-        component: DashboardComponent,
-        // canActivate: [authGaurd]
-    },
+    // {
+    //     path: 'dashboard',
+    //     component: DashboardComponent,
+    //     // canActivate: [authGaurd]
+    // },
 
     {
         path: 'chat',
         component: ChatComponent,
-        // canActivate: [authGaurd]
+        canActivate: [authGaurd]
     },
 
     {path: 'error-500', component: InternalErrorComponent},

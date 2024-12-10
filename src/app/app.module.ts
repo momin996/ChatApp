@@ -26,6 +26,8 @@ import { AppInitService } from './core/services/app-init-service';
 import { CustomRouterStateSerilizer } from './core/app-store/router-state.model';
 import { ChatComponent } from './chat/chat.component';
 import { ChatSidebarComponent } from './chat/chat-sidebar/chat-sidebar.component';
+import { ChatListItemComponent } from './chat/chat-sidebar/chat-list-item/chat-list-item.component';
+import { ConversationComponent } from './chat/conversation/conversation.component';
 
 
 @NgModule({
@@ -39,8 +41,9 @@ import { ChatSidebarComponent } from './chat/chat-sidebar/chat-sidebar.component
 
         DashboardComponent,
         ChatComponent,
-        ChatSidebarComponent
-
+        ChatSidebarComponent,
+        ChatListItemComponent,
+        ConversationComponent,
     ],
     imports: [
         BrowserModule,
