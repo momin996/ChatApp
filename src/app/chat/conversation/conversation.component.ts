@@ -1,7 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { CustomizerSettingsService } from 'src/app/core/services/customizer-settings.service';
 import { ChatService } from '../chat.service';
 import { ChatDetails, MediaType, MessageRequest } from '../chat.types';
+import { User } from 'src/app/auth/models/user.model';
 
 @Component({
     selector: 'app-conversation',
@@ -9,7 +10,7 @@ import { ChatDetails, MediaType, MessageRequest } from '../chat.types';
     styleUrl: './conversation.component.scss',
 })
 export class ConversationComponent implements OnInit {
-    userId: number;
+    @Input() user: User;
     chatId: number;
     chat: ChatDetails;
 
@@ -19,7 +20,7 @@ export class ConversationComponent implements OnInit {
     ) {}
 
     ngOnInit(): void {
-        this.userId = 1;
+        // this.userId = 1;
         this.chatId = 5;
 
         this.chatService
@@ -38,7 +39,7 @@ export class ConversationComponent implements OnInit {
             // Handle the message submission logic here
             const json: MessageRequest = {
               chatId: 5,
-              senderId: 1,
+              senderId: this.user.id,
               content: this.messageContent,
               mediaType: MediaType.Text,
             }
@@ -58,7 +59,7 @@ export class ConversationComponent implements OnInit {
         console.log(messageValue);
         
         const json: MessageRequest = {
-          senderId: 1,
+          senderId: this.user.id,
           recieverId: 2,
           content: messageValue,
           mediaType: MediaType.Text,
@@ -69,6 +70,10 @@ export class ConversationComponent implements OnInit {
         //     console.log(res);
         //   });
       }
+    }
+
+    isMessageByMe(messageUserId: number) : boolean {
+      return messageUserId==this.user.id;
     }
 
     toggleTheme() {

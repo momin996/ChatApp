@@ -1,3 +1,5 @@
+import { User } from "./user.model";
+
 export enum TokenStatus {
     PENDING = 'PENDING',
     VALIDATING = 'VALIDATING',
@@ -11,9 +13,5 @@ export interface AuthState {
     isLoading: boolean,
     isError: boolean,
     error: any,
-    user: AuthUser | null;
-}
-
-export interface AuthUser {
-
+    user: User | null;
 }

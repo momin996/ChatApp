@@ -1,6 +1,6 @@
 // Core Dependencies Import
 import { APP_INITIALIZER, NgModule, isDevMode } from '@angular/core';
-import { HttpClientModule } from '@angular/common/http';
+import { HTTP_INTERCEPTORS, HttpClientModule } from '@angular/common/http';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { StoreModule } from '@ngrx/store';
@@ -28,6 +28,7 @@ import { ChatComponent } from './chat/chat.component';
 import { ChatSidebarComponent } from './chat/chat-sidebar/chat-sidebar.component';
 import { ChatListItemComponent } from './chat/chat-sidebar/chat-list-item/chat-list-item.component';
 import { ConversationComponent } from './chat/conversation/conversation.component';
+import { AuthInterceptor } from './auth/interceptor/auth.interceptor';
 
 
 @NgModule({
@@ -64,6 +65,7 @@ import { ConversationComponent } from './chat/conversation/conversation.componen
           deps: [AppInitService],
           multi: true,
         },
+        { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true },
       ],
     bootstrap: [AppComponent]
 })

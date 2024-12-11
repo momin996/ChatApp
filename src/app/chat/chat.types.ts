@@ -1,3 +1,5 @@
+import { User } from "../auth/models/user.model";
+
 export interface ChatListingResponse {
     response: ChatSummary[];
     isSuccess: boolean;
@@ -28,20 +30,20 @@ export interface ChatDetails {
 
 export interface Message {
     id: number;
-    sender: UserProfile;
+    sender: User;
     timestamp: string;
     content: string;
     messageStatuses: MessageStatuse[];
 }
 
-export interface UserProfile {
-    id: number;
-    username: string;
-    firstName: string;
-    lastName: string;
-    phoneNumber: string;
-    email: string;
-}
+// export interface UserProfile {
+//     id: number;
+//     username: string;
+//     firstName: string;
+//     lastName: string;
+//     phoneNumber: string;
+//     email: string;
+// }
 
 export interface MessageStatuse {
     isDelivered: boolean;

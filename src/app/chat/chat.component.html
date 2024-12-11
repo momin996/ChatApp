@@ -4,7 +4,7 @@
     </div>
     <div class="col-lg-8 col-xxl-9">
 
-        <app-conversation></app-conversation>
+        <app-conversation *ngIf="user" [user]="user"></app-conversation>
 
     </div>
 </div>

@@ -8,6 +8,7 @@
     [class.card-borderd-theme]="themeService.isCardBorder()"
     [class.card-border-radius]="themeService.isCardBorderRadius()"
     [class.rtl-enabled]="themeService.isRTLEnabled()"
+    *ngIf="user"
 >
     <div class="d-md-flex align-items-center justify-content-space-between">
         <div class="header-left-side d-flex align-items-center">
@@ -19,8 +20,8 @@
             </li>
             <li>
                 <button mat-icon-button [matMenuTriggerFor]="profileMenu" class="profile-btn main-color border-none bg-transparent position-relative">
-                    <img src="assets/img/admin.jpg" class="rounded-circle" alt="admin">
-                    <span class="fw-semibold">Adison Jack</span>
+                    <img src="{{user.avatar}}.jpg" class="rounded-circle" alt="admin">
+                    <span class="fw-semibold">{{user.firstName}} {{user.lastName}}</span>
                 </button>
                 <mat-menu class="profile-menu-dropdown" #profileMenu="matMenu" xPosition="before">
                     <ul class="m-0">

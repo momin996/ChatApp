@@ -9,6 +9,7 @@ import { ApiStringResp, AuthTokens } from "../models/auth-api.models";
 import { LocalStorageService } from "src/app/core/services/local-storage.service";
 import { ActivatedRoute, Router } from "@angular/router";
 import { ShowAlertAction } from "src/app/core/app-store/app.actions";
+import { User } from "../models/user.model";
 
 
 @Injectable()
@@ -24,14 +25,13 @@ export class AuthEffects {
         
     ) {}
 
-    
+    firstRoute: string = '/chat';
 
     // Login
     login$ = createEffect(() => {
         return this.actions$.pipe(
             ofType(AuthActions.loginRequestAction),
             exhaustMap((request) => {
-                console.log('login action called')
                 return this.authService.login(request.credentials).pipe(
                     map((response: AuthTokens) => {
                         console.log('got response from auth login endpoint');
@@ -70,17 +70,45 @@ export class AuthEffects {
 
     // Login Success
     // Refresh Token Success
-    authenticationSuccessfull = createEffect(() => {
+    authenticationSuccessfull$ = createEffect(() => {
         return this.actions$.pipe(
             ofType(
                 AuthActions.loginSuccessAction,
                 AuthActions.refreshTokenSuccessAction
             ),
-            // firstRouteAction has the routeUrl parameter so that if in the future we route the user to specific route based on its permisions
-            map(() => AuthActions.firstRouteAction({routeUrl: '/dashboard'}))
+            map(() => AuthActions.userRequestAction())
         );
     });
+    
+    getUser$ = createEffect(() => {
+        return this.actions$.pipe(
+            ofType(
+                AuthActions.userRequestAction
+            ),
+            exhaustMap((action) => {
+                return this.authService.getUser().pipe(
+                    map((response: User) => {
+                        if(response){
+                            return AuthActions.userSuccessAction({user: response});
+                            // return AuthActions.firstRouteAction({routeUrl: this.firstRoute});
+                        }
+                        return AuthActions.logoutAction();
+                    }),
+                    catchError(err => of(AuthActions.logoutAction()))
+                )
+            })
+        )
+    })
 
+    getUserSuccess$ = createEffect(() => {
+        return this.actions$.pipe(
+            ofType(AuthActions.userSuccessAction),
+            map(() => AuthActions.firstRouteAction({routeUrl: this.firstRoute}))
+        )
+    })
+
+// firstRouteAction has the routeUrl parameter so that if in the future we route the user to specific route based on its permisions
+// map(() => AuthActions.firstRouteAction({routeUrl: '/dashboard'}))
 
     forgotPasswordRequest$ = createEffect(() => {
         return this.actions$.pipe(

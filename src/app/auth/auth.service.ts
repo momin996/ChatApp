@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 
 import { AppConfigService } from '../core/services/app-config.service';
 import { ApiStringResp, AuthTokens, LoginRequestModel, ResetPasswordRequestModel } from './models/auth-api.models';
-import { LocalStorageService } from '../core/services/local-storage.service';
+import { User } from "./models/user.model";
 
 @Injectable({
   providedIn: 'root'
@@ -13,13 +13,18 @@ export class AuthService {
 
   private apiUrl: string;
 
-  constructor(private http: HttpClient, appConfig: AppConfigService, private localStorageService: LocalStorageService) {
+  constructor(private http: HttpClient, appConfig: AppConfigService) {
     this.apiUrl = appConfig.getAPIUrl();
   }
 
   login(loginRequest: LoginRequestModel): Observable<AuthTokens> {
     const apiEndpoint = `${this.apiUrl}/Auth/Login`;
     return this.http.post<AuthTokens | any>(apiEndpoint, loginRequest);
+  }
+
+  getUser() : Observable<User> {
+    const apiEndpoint = `${this.apiUrl}/Users/me`;
+    return this.http.get<User>(apiEndpoint);
   }
 
   refreshToken(refreshTokenRequest: AuthTokens) {

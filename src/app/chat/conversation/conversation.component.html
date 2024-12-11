@@ -8,9 +8,9 @@
             <mat-card-content>
                 <div class="chat-header p-15 d-md-flex align-items-center justify-content-space-between">
                     <div class="user d-flex align-items-center">
-                        <img src="assets/img/user/user11.jpg" width="50" class="rounded-circle" alt="user">
+                        <img src="{{user.id}}.jpg" width="50" class="rounded-circle" alt="user">
                         <div class="ms-12">
-                            <h5 class="fs-16 mb-4">Laurent Perrier</h5>
+                            <h5 class="fs-16 mb-4">{{user.firstName}} {{user.lastName}}</h5>
                             <span class="d-block active position-relative muted-color fs-14">Active now</span>
                             <!-- <span class="d-block deactive position-relative muted-color fs-14">Active now</span> -->
                         </div>
@@ -40,14 +40,14 @@
                 </div>
                 <div class="chat-body p-15" *ngIf="chat">
                     <ul class="ps-0 list-unstyled mb-0 mt-0">
-                        <li *ngFor="let message of chat.messages" class="position-relative" [ngClass]="{'right': message.sender.id==userId}">
-                            <img src="assets/img/user/{{message.sender.id!=userId ? 'user12' : 'user11'}}.jpg" width="50" class="rounded-circle user" alt="user">
+                        <li *ngFor="let message of chat.messages" class="position-relative" [ngClass]="{'right': isMessageByMe(message.sender.id)}">
+                            <img src="{{message.sender.avatar}}.jpg" width="50" class="rounded-circle user" alt="user">
                             <div class="message">
                                 <div>
                                     <p>{{ message.content }}</p>
                                 </div>
                             </div>
-                            <span class="time d-block muted-color mt-8 fs-14" [ngClass]="{'text-start': message.sender.id!=userId}">{{message.timestamp | date: 'shortTime'}}</span>
+                            <span class="time d-block muted-color mt-8 fs-14" [ngClass]="{'text-start': !isMessageByMe(message.sender.id)}">{{message.timestamp | date: 'shortTime'}}</span>
                         </li>
                         <!-- <li class="position-relative right">
                             <img src="assets/img/user/user12.jpg" width="50" class="rounded-circle user" alt="user">

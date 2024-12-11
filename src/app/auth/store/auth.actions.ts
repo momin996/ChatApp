@@ -1,6 +1,6 @@
 import { createAction, props } from "@ngrx/store";
 import { AuthTokens, LoginRequestModel, ResetPasswordRequestModel } from "../models/auth-api.models";
-import { AuthUser } from "../models/auth-state.model";
+import { User } from "../models/user.model";
 
 
 export const LOGIN_REQUEST = '[Auth] Login Request';
@@ -43,7 +43,7 @@ export const loginFailureAction = createAction(LOGIN_FAILURE,props<{ error: Erro
 // User
 export const userRequestAction = createAction(USER_REQUEST);
 
-export const userSuccessAction = createAction(USER_SUCCESS, props<{ user: AuthUser }>());
+export const userSuccessAction = createAction(USER_SUCCESS, props<{ user: User }>());
 
 export const userFailureAction = createAction(USER_FAILURE, props<{ error: Error }>());
 
