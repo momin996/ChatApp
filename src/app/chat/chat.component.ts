@@ -16,11 +16,16 @@ export class ChatComponent implements OnInit {
     ) {
 
     }
-    
+
     ngOnInit(): void {
         this.authFacade.getUser().subscribe(user => {
             if(user!=null) this.user=user;
         });
+    }
+
+    selectedChatId: number;
+    onSidebarChatClicked(chatId: number) {
+        this.selectedChatId = chatId;
     }
 
 }

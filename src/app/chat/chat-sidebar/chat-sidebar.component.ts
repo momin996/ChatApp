@@ -1,7 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { CustomizerSettingsService } from '../../core/services/customizer-settings.service'
 import { ChatService } from '../chat.service';
 import { ChatSummary } from '../chat.types';
+import { User } from 'src/app/auth/models/user.model';
 
 @Component({
     selector: 'app-chat-sidebar',
@@ -10,8 +11,8 @@ import { ChatSummary } from '../chat.types';
 })
 export class ChatSidebarComponent implements OnInit {
 
+    @Input() user : User;
     chats: ChatSummary[];
-    currentUserId: number;
 
     constructor(
         public themeService: CustomizerSettingsService,
@@ -20,14 +21,21 @@ export class ChatSidebarComponent implements OnInit {
 
     ngOnInit(): void {
 
-        this.currentUserId = 1;
-
-        this.chatService.getChats(this.currentUserId)
+        this.chatService.getChats(this.user.id)
             .subscribe((chats: ChatSummary[]) => {
                 this.chats = chats;
-                
-                console.dir(chats)
             });
+    }
+
+    // this.chatName = this.chatItem.isGroup && this.chatItem.chatName ? this.chatItem.chatName : this.chatItem.lastMessage.sender.firstName;
+
+    getChatName(chatItem: ChatSummary){
+        return chatItem.isGroup && chatItem.chatName ? chatItem.chatName : chatItem.lastMessage.sender.firstName;
+    }
+
+    @Output() openChat = new EventEmitter<number>();
+    onChatClicked(chatId: number) {
+        this.openChat.emit(chatId);
     }
 
     toggleTheme() {

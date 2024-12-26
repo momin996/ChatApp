@@ -1,10 +1,8 @@
-<div class="row">
+<div class="row" *ngIf="user">
     <div class="col-lg-4 col-xxl-3">
-        <app-chat-sidebar></app-chat-sidebar>
+        <app-chat-sidebar [user]="user" (openChat)="onSidebarChatClicked($event)"></app-chat-sidebar>
     </div>
     <div class="col-lg-8 col-xxl-9">
-
-        <app-conversation *ngIf="user" [user]="user"></app-conversation>
-
+        <app-conversation *ngIf="selectedChatId" [user]="user" [chatId]="selectedChatId"></app-conversation>
     </div>
 </div>

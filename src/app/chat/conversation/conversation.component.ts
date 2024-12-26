@@ -11,7 +11,7 @@ import { User } from 'src/app/auth/models/user.model';
 })
 export class ConversationComponent implements OnInit {
     @Input() user: User;
-    chatId: number;
+    @Input() chatId: number;
     chat: ChatDetails;
 
     constructor(
@@ -21,19 +21,21 @@ export class ConversationComponent implements OnInit {
 
     ngOnInit(): void {
         // this.userId = 1;
-        this.chatId = 5;
+        // this.chatId = 5;
+        this.getMessages();
+    }
 
-        this.chatService
-            .getChatById(this.chatId)
-            .subscribe((chat: ChatDetails) => {
-              this.chat = chat;
-              
-              console.dir(chat);
-            });
+    private getMessages(){
+      this.chatService
+      .getChatById(this.chatId)
+      .subscribe((chat: ChatDetails) => {
+        this.chat = chat;
+        
+        console.dir(chat);
+      });
     }
 
     messageContent: string = '';
-
     onSubmit() {
         if (this.messageContent.trim()) {
             // Handle the message submission logic here
@@ -49,6 +51,7 @@ export class ConversationComponent implements OnInit {
             this.chatService.sendMessage(json)
               .subscribe(res => {
                 console.log(res);
+                this.getMessages();
               });
         }
     }

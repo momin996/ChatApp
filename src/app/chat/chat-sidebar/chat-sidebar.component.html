@@ -20,7 +20,12 @@
                 </ul> -->
                 <span class="sub-title d-block muted-color fw-normal fs-14 position-relative"><i class="flaticon-comment"></i> ALL MESSAGES</span>
                 <ul *ngIf="chats && chats.length>0" class="sidebar-list ps-0 list-unstyled mb-0">
-                    <app-chat-list-item *ngFor="let chat of chats" [chatItem]="chat"></app-chat-list-item>
+                    <app-chat-list-item *ngFor="let chat of chats" 
+                        [chatName]="chat.chatName"
+                        [lastMessage]="chat.lastMessage.content"
+                        [lastMessageAt]="chat.lastMessage.timestamp"
+                        (click)="onChatClicked(chat.id)"
+                    ></app-chat-list-item>
                 </ul>
             </div>
         </ng-scrollbar>
