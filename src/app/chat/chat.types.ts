@@ -14,6 +14,12 @@ export interface ChatSummary {
     lastMessage: Message;
 }
 
+export interface NewChatRequest {
+    chatName: string | null;
+    chatParticipantIds: number[];
+    isGroup: boolean;
+}
+
 export interface ChatResponse {
     response: ChatDetails;
     isSuccess: boolean;
@@ -61,8 +67,6 @@ export enum MediaType {
 
 export interface MessageRequest {
     chatId?: number;
-    senderId: number;
-    recieverId?: number;
     content?: string;
     mediaUrl?: string;
     mediaType: MediaType;

@@ -37,8 +37,6 @@ export class HeaderComponent implements OnInit{
 
     ngOnInit(): void {
         this.authFacade.getUser().subscribe(user => {
-            console.log(user);
-            
             if(user!=null) this.user=user;
         });
     }

@@ -18,7 +18,6 @@ export class AuthInterceptor implements HttpInterceptor {
         req: HttpRequest<unknown>,
         next: HttpHandler
     ): Observable<HttpEvent<unknown>> {
-        console.log('Interceptor called');
         
         const accessToken = this.localStorageService.getAccessToken();
         if (accessToken) {

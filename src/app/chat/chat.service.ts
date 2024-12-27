@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { AppConfigService } from '../core/services/app-config.service';
-import { ChatListingResponse, ChatResponse, ChatSummary, MediaType, MessageRequest } from './chat.types';
+import { ChatListingResponse, ChatResponse, ChatSummary, MediaType, MessageRequest, NewChatRequest } from './chat.types';
 import { map, Observable } from 'rxjs';
 
 @Injectable({
@@ -21,14 +21,19 @@ export class ChatService {
       .pipe(map(res => res.response));
   }
 
-  getChats(userId: number) : Observable<ChatSummary[]> {
-    const apiEndpoint = `${this.apiUrl}/Users/${userId}/Chats`;
+  getChats() : Observable<ChatSummary[]> {
+    const apiEndpoint = `${this.apiUrl}/Chats`;
     return this.http.get<ChatListingResponse>(apiEndpoint)
       .pipe(map(res => res.response));
   }
 
-  sendMessage(json: MessageRequest){
+  startNewChat(newChat: NewChatRequest){
+    const apiEndpoint = `${this.apiUrl}/Chats`;
+    this.http.post(apiEndpoint, newChat);
+  }
+
+  sendMessage(newMessage: MessageRequest){
     const apiEndpoint = `${this.apiUrl}/Messages`;
-    return this.http.post<MessageRequest>(apiEndpoint, json);
+    return this.http.post<MessageRequest>(apiEndpoint, newMessage);
   }
 }

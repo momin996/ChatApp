@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
 import { CustomizerSettingsService } from 'src/app/core/services/customizer-settings.service';
 import { ChatService } from '../chat.service';
 import { ChatDetails, MediaType, MessageRequest } from '../chat.types';
@@ -9,30 +9,42 @@ import { User } from 'src/app/auth/models/user.model';
     templateUrl: './conversation.component.html',
     styleUrl: './conversation.component.scss',
 })
-export class ConversationComponent implements OnInit {
+export class ConversationComponent implements OnInit, OnChanges {
     @Input() user: User;
     @Input() chatId: number;
     chat: ChatDetails;
 
     constructor(
-        public themeService: CustomizerSettingsService,
-        private chatService: ChatService
+      public themeService: CustomizerSettingsService,
+      private chatService: ChatService
     ) {}
-
+  
     ngOnInit(): void {
-        // this.userId = 1;
-        // this.chatId = 5;
+      // this.getMessages();
+    }
+
+    ngOnChanges(changes: SimpleChanges): void {
+      if (changes['chatId']) {
         this.getMessages();
+      }
     }
 
     private getMessages(){
       this.chatService
-      .getChatById(this.chatId)
-      .subscribe((chat: ChatDetails) => {
-        this.chat = chat;
-        
-        console.dir(chat);
-      });
+        .getChatById(this.chatId)
+        .subscribe((chat: ChatDetails) => {
+          this.chat = chat;
+          
+          
+        });
+    }
+
+    get chatName(){
+      if(this.chat.isGroup){
+        return this.chat.chatName;
+      }
+      const otherUser = this.chat.messages.filter(m => m.sender.id !== this.user.id)[0]?.sender;
+      return `${otherUser.firstName} ${otherUser.lastName}`;
     }
 
     messageContent: string = '';
@@ -40,8 +52,7 @@ export class ConversationComponent implements OnInit {
         if (this.messageContent.trim()) {
             // Handle the message submission logic here
             const json: MessageRequest = {
-              chatId: 5,
-              senderId: this.user.id,
+              chatId: this.chatId,
               content: this.messageContent,
               mediaType: MediaType.Text,
             }
@@ -54,25 +65,6 @@ export class ConversationComponent implements OnInit {
                 this.getMessages();
               });
         }
-    }
-
-    messageValue: string
-    sendMessageToExistingChat(messageValue: string){
-      if(messageValue!=''){
-        console.log(messageValue);
-        
-        const json: MessageRequest = {
-          senderId: this.user.id,
-          recieverId: 2,
-          content: messageValue,
-          mediaType: MediaType.Text,
-        }
-
-        // this.chatService.sendMessage(json)
-        //   .subscribe(res => {
-        //     console.log(res);
-        //   });
-      }
     }
 
     isMessageByMe(messageUserId: number) : boolean {
