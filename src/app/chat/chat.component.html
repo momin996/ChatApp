@@ -1,4 +1,7 @@
 <div class="row" *ngIf="user">
+    <div class="col-12">
+        <button (click)="testSignalR()">Test</button>
+    </div>
     <div class="col-lg-4 col-xxl-3">
         <app-chat-sidebar (openChat)="onSidebarChatClicked($event)"></app-chat-sidebar>
     </div>

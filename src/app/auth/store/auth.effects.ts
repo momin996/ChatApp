@@ -10,6 +10,7 @@ import { LocalStorageService } from "src/app/core/services/local-storage.service
 import { ActivatedRoute, Router } from "@angular/router";
 import { ShowAlertAction } from "src/app/core/app-store/app.actions";
 import { User } from "../models/user.model";
+import { SignalRService } from "src/app/signalr.service";
 
 
 @Injectable()
@@ -22,6 +23,7 @@ export class AuthEffects {
         private router: Router,
         private activatedRoute: ActivatedRoute,
         private location: Location,
+        private signalRService: SignalRService
         
     ) {}
 
@@ -34,7 +36,6 @@ export class AuthEffects {
             exhaustMap((request) => {
                 return this.authService.login(request.credentials).pipe(
                     map((response: AuthTokens) => {
-                        console.log('got response from auth login endpoint');
                         if(response) {
                             this.localStorageService.saveTokens(response);
                             return AuthActions.loginSuccessAction();
@@ -159,6 +160,9 @@ export class AuthEffects {
                 }
                 if(route.includes('auth')) route = '/chat';
                 console.log('Routing to : ' + route);
+
+                // this.signalRService.connect();
+
                 this.router.navigateByUrl(route);
             })
         );
@@ -172,6 +176,7 @@ export class AuthEffects {
             tap(() => {
                 this.localStorageService.removeTokens();
                 this.router.navigateByUrl('/auth/logout');
+                this.signalRService.stopConnection();
             })
         );
     }, {dispatch: false});

@@ -1,7 +1,8 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { CustomizerSettingsService } from '../../core/services/customizer-settings.service'
 import { ChatService } from '../chat.service';
-import { ChatSummary } from '../chat.types';
+import { ChatSummary, Message } from '../chat.types';
+import { SignalRService } from 'src/app/signalr.service';
 
 @Component({
     selector: 'app-chat-sidebar',
@@ -15,7 +16,8 @@ export class ChatSidebarComponent implements OnInit {
 
     constructor(
         public themeService: CustomizerSettingsService,
-        private chatService: ChatService
+        private chatService: ChatService,
+        private signalRService: SignalRService
     ) {}
 
     ngOnInit(): void {
@@ -23,10 +25,20 @@ export class ChatSidebarComponent implements OnInit {
     }
 
     private getChats(){
-        this.chatService.getChats()
-            .subscribe((chats: ChatSummary[]) => {
-                this.chats = chats;
+        // this.chatService.getChats()
+        //     .subscribe((chats: ChatSummary[]) => {
+        //         this.chats = chats;
+        // });
+        this.chatService.chatList$
+        .subscribe((chats: ChatSummary[]) => {
+            this.chats = chats;
         });
+
+        this.signalRService.on('ReceiveMessage', (message: Message) => {
+            this.chatService.addLastMessageToChatListItem(message);
+        });
+        
+        // this.chats = this.chatService.getChatList
     }
     
     onChatClicked(chatId: number) {

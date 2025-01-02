@@ -1,5 +1,21 @@
 import { User } from "../auth/models/user.model";
 
+// Requests
+export interface NewChatRequest {
+    chatName: string | null;
+    chatParticipantIds: number[];
+    isGroup: boolean;
+}
+
+export interface MessageRequest {
+    chatId?: number;
+    content?: string;
+    mediaUrl?: string;
+    mediaType: MediaType;
+}
+
+
+// Responses
 export interface ChatListingResponse {
     response: ChatSummary[];
     isSuccess: boolean;
@@ -7,24 +23,20 @@ export interface ChatListingResponse {
     message: string;
 }
 
-export interface ChatSummary {
-    id: number;
-    chatName: string;
-    isGroup: boolean;
-    lastMessage: Message;
-}
-
-export interface NewChatRequest {
-    chatName: string | null;
-    chatParticipantIds: number[];
-    isGroup: boolean;
-}
-
 export interface ChatResponse {
     response: ChatDetails;
     isSuccess: boolean;
     statusCode: number;
     message: string;
+}
+
+
+// Models
+export interface ChatSummary {
+    id: number;
+    chatName: string;
+    isGroup: boolean;
+    lastMessage: Message;
 }
 
 export interface ChatDetails {
@@ -36,22 +48,14 @@ export interface ChatDetails {
 
 export interface Message {
     id: number;
+    chatId: number;
     sender: User;
     timestamp: string;
     content: string;
-    messageStatuses: MessageStatuse[];
+    messageStatuses: MessageStatus[];
 }
 
-// export interface UserProfile {
-//     id: number;
-//     username: string;
-//     firstName: string;
-//     lastName: string;
-//     phoneNumber: string;
-//     email: string;
-// }
-
-export interface MessageStatuse {
+export interface MessageStatus {
     isDelivered: boolean;
     isSeen: boolean;
     deliveredAt: any;
@@ -65,9 +69,3 @@ export enum MediaType {
     Audio
 }
 
-export interface MessageRequest {
-    chatId?: number;
-    content?: string;
-    mediaUrl?: string;
-    mediaType: MediaType;
-}

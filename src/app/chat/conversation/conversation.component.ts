@@ -1,8 +1,9 @@
 import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
 import { CustomizerSettingsService } from 'src/app/core/services/customizer-settings.service';
 import { ChatService } from '../chat.service';
-import { ChatDetails, MediaType, MessageRequest } from '../chat.types';
+import { ChatDetails, MediaType, Message, MessageRequest } from '../chat.types';
 import { User } from 'src/app/auth/models/user.model';
+import { SignalRService } from 'src/app/signalr.service';
 
 @Component({
     selector: 'app-conversation',
@@ -16,11 +17,15 @@ export class ConversationComponent implements OnInit, OnChanges {
 
     constructor(
       public themeService: CustomizerSettingsService,
-      private chatService: ChatService
+      private chatService: ChatService,
+      private signalRService: SignalRService
     ) {}
   
     ngOnInit(): void {
       // this.getMessages();
+      this.signalRService.on('ReceiveMessage', (message: Message) => {
+        this.chat.messages.push(message);
+      });
     }
 
     ngOnChanges(changes: SimpleChanges): void {
@@ -34,8 +39,6 @@ export class ConversationComponent implements OnInit, OnChanges {
         .getChatById(this.chatId)
         .subscribe((chat: ChatDetails) => {
           this.chat = chat;
-          
-          
         });
     }
 
