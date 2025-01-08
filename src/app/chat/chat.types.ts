@@ -34,7 +34,7 @@ export interface ChatResponse {
 // Models
 export interface ChatSummary {
     id: number;
-    chatName: string;
+    chatName?: string;
     isGroup: boolean;
     lastMessage: Message;
 }

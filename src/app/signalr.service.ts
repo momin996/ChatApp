@@ -70,52 +70,17 @@ export class SignalRService {
     this.hubConnection.on(eventName, callback);
   }
 
-  // connect(){
-  //   const accessToken = this.localStorageService.getAccessToken().token;
-  //   this.hubConnection = new HubConnectionBuilder()
-  //   .withUrl(
-  //     this.appConfig.signalRUrl,
-  //     {
-  //       withCredentials :false,
-  //       accessTokenFactory : ()=> accessToken
-  //     }
-  //   )
-  //   .withAutomaticReconnect()
-  //   .configureLogging(LogLevel.Information)
-  //   .build();
+  public send(eventName: string, data: any): Promise<void> {
+    return this.hubConnection.send(eventName, data);
+  }
 
-  //   // this.initiateListeners();
-    
-  // }
-
-  // startConnection(){
-  //   if(this.hubConnection.state != HubConnectionState.Connected && this.hubConnection.state != HubConnectionState.Connecting){
-  //     this.hubConnection.start();
-  //   }
-  // }
+  public invoke(eventName: string, data: any): Promise<any> {
+    return this.hubConnection.invoke(eventName, data);
+  }
 
   testConnection(){
     console.log('test call made');
     this.hubConnection.send('TestClientCall', this.hubConnection.connectionId);
-  }
-  
-
-  private initiateListeners(){
-
-    // const recieveMessageCallBack = (data: any) => {
-    //   alert('Client recieves event from server');
-    //   console.log('New Message: ', data);
-    // }
-
-    this.hubConnection.on('ReceiveMessage', (data) => {
-      
-    });
-  }
-
-  onMessageReceived(callback: (senderId: string, message: string) => void): void {
-    this.hubConnection.on('ReceiveMessage', (senderId: string, message: string) => {
-      callback(senderId, message);
-    });
   }
 
 

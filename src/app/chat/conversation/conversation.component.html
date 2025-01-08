@@ -3,12 +3,11 @@
     style="padding: 0%; height: 96%;"
     [class.component-dark-theme]="themeService.isDark()"
     [class.component-rtl-enabled]="themeService.isRTLEnabled()"
-    *ngIf="chat"
 >
     <mat-card-content>
         <div class="chat-header p-15 d-md-flex align-items-center justify-content-space-between">
             <div class="user d-flex align-items-center">
-                <img src="{{user.id}}.jpg" width="50" class="rounded-circle" alt="user">
+                <img src="{{user.avatar}}.jpg" width="50" class="rounded-circle" alt="user">
                 <div class="ms-12">
                     <h5 class="fs-16 mb-4">{{ chatName }}</h5>
                     <span class="d-block active position-relative muted-color fs-14">Active now</span>
@@ -38,16 +37,23 @@
                 </mat-menu>
             </div>
         </div>
-        <div class="chat-body p-15" *ngIf="chat">
+        <div class="chat-body p-15">
             <ul class="ps-0 list-unstyled mb-0 mt-0">
-                <li *ngFor="let message of chat.messages" class="position-relative" [ngClass]="{'right': isMessageByMe(message.sender.id)}">
+                <li *ngFor="let message of conversation.messages" class="position-relative" [ngClass]="{'right': isMessageByMe(message.sender.id)}">
                     <img src="{{message.sender.avatar}}.jpg" width="50" class="rounded-circle user" alt="user">
                     <div class="message">
                         <div>
                             <p>{{ message.content }}</p>
                         </div>
                     </div>
-                    <span class="time d-block muted-color mt-8 fs-14" [ngClass]="{'text-start': !isMessageByMe(message.sender.id)}">{{message.timestamp | date: 'shortTime'}}</span>
+                    <span class="time d-block muted-color mt-8 fs-14" [ngClass]="{'text-start': !isMessageByMe(message.sender.id)}">
+                        {{message.timestamp | date: 'shortTime'}}
+                        <span class="lh-1 ps-5" *ngIf="isMessageByMe(message.sender.id)" [ngClass]="{'main-color': isSeen(message.messageStatuses) && isDelivered(message.messageStatuses)}">
+                            <i *ngIf="isDelivered(message.messageStatuses)" class="ri-check-double-line"></i>
+                            <i *ngIf="!isDelivered(message.messageStatuses) && !isSeen(message.messageStatuses)" class="ri-check-line"></i>
+                        </span>
+                    </span>
+                    
                 </li>
                 <!-- <li class="position-relative right">
                     <img src="assets/img/user/user12.jpg" width="50" class="rounded-circle user" alt="user">

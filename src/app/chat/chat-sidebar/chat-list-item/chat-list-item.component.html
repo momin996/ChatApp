@@ -5,14 +5,18 @@
             <span class="active-status"></span>
         </div>
         <div class="title ms-10">
-            <h5 class="fs-15 mb-4">{{ chatName }}</h5>
-            <span class="d-block gray-color fs-14">{{ lastMessage }}</span>
+            <h5 class="fs-15 mb-4">{{ chatListItem.chatName }}</h5>
+            <span class="d-block gray-color fs-14">{{ chatListItem.lastMessage.content }}</span>
             <!-- <span class="d-block green-color fs-14">Typing...</span> -->
         </div>
     </div>
     <div class="info" align="end">
-        <span class="time fs-13 muted-color mb-3 d-block">{{lastMessageAt | date : 'MM/dd/yyyy'}}</span>
-        <span class="badge">2</span>
+        <span class="time fs-13 muted-color mb-3 d-block">{{chatListItem.lastMessage.timestamp | date : 'MM/dd/yyyy'}}</span>
+        <span class="badge" *ngIf="!isMyMessage">2</span>
+        <span *ngIf="isMyMessage" [ngClass]="{'main-color': isSeen && isDelivered}" class="lh-1">
+            <i *ngIf="isDelivered" class="ri-check-double-line"></i>
+            <i *ngIf="!isDelivered && !isSeen" class="ri-check-line"></i>
+        </span>
     </div>
 </li>
 

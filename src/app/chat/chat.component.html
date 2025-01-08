@@ -1,11 +1,8 @@
-<div class="row" *ngIf="user">
-    <div class="col-12">
-        <button (click)="testSignalR()">Test</button>
-    </div>
+<div class="row" *ngIf="user$ | async as user">
     <div class="col-lg-4 col-xxl-3">
-        <app-chat-sidebar (openChat)="onSidebarChatClicked($event)"></app-chat-sidebar>
+        <app-chat-sidebar *ngIf="chatList$ | async as chatList" [chatList]="chatList"></app-chat-sidebar>
     </div>
     <div class="col-lg-8 col-xxl-9">
-        <app-conversation *ngIf="selectedChatId" [user]="user" [chatId]="selectedChatId"></app-conversation>
+        <app-conversation *ngIf="conversation$ | async as conversation" [user]="user" [conversation]="conversation"></app-conversation>
     </div>
 </div>

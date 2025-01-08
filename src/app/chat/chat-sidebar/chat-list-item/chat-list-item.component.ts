@@ -1,4 +1,7 @@
 import { Component, Input, OnInit } from '@angular/core';
+import { ChatSummary, Message } from '../../chat.types';
+import { ChatService } from '../../chat.service';
+import { AuthFacade } from 'src/app/auth/auth.facade';
 
 @Component({
   selector: 'app-chat-list-item',
@@ -8,12 +11,30 @@ import { Component, Input, OnInit } from '@angular/core';
 })
 export class ChatListItemComponent implements OnInit {
   
-  @Input() chatName: string;
-  @Input() lastMessage: string;
-  @Input() lastMessageAt: string;
-
+  @Input() chatListItem: ChatSummary;
   
-  ngOnInit(): void {
+  isMyMessage = false;
+  isDelivered = false;
+  isSeen = false;
+
+  constructor(
+    private authFacade: AuthFacade,
+    private chatService: ChatService,
+  ) {
+
   }
 
+  ngOnInit(): void {
+    
+    this.authFacade.getUser().subscribe(user => {
+        if(user!=null) {
+            const lastMessage = this.chatListItem.lastMessage;
+            this.isMyMessage = this.chatService.isMyMessage(lastMessage, user.id);
+            this.isDelivered = this.chatService.isMessageDelivered(lastMessage.messageStatuses)
+            this.isSeen = this.chatService.isMessageSeen(lastMessage.messageStatuses)
+            // console.log(this.isMyMessage, this.isDelivered, this.isSeen);
+        }
+    });
+  }
+  
 }
