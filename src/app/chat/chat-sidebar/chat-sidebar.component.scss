@@ -212,6 +212,14 @@
     }
 }
 
+::ng-deep .contacts-menu-panel.mat-mdc-menu-panel {
+    max-width: none;
+}
+
+::ng-deep .contacts-menu-panel .mat-mdc-menu-content {
+    padding: 0;
+}
+
 @media only screen and (max-width : 767px) {
 
     .chat-sidebar {

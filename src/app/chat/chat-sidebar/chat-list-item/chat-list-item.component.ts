@@ -1,7 +1,6 @@
-import { Component, Input, OnInit } from '@angular/core';
-import { ChatSummary, Message } from '../../chat.types';
+import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
 import { ChatService } from '../../chat.service';
-import { AuthFacade } from 'src/app/auth/auth.facade';
+import { ChatListItem, MessageDto, MessageStatusDto } from '../../chat.types';
 
 @Component({
   selector: 'app-chat-list-item',
@@ -9,32 +8,62 @@ import { AuthFacade } from 'src/app/auth/auth.facade';
   templateUrl: './chat-list-item.component.html',
   styleUrl: './chat-list-item.component.scss'
 })
-export class ChatListItemComponent implements OnInit {
+export class ChatListItemComponent implements OnChanges {
   
-  @Input() chatListItem: ChatSummary;
+  @Input() userId:number;
+  @Input() chatListItem: ChatListItem;
   
-  isMyMessage = false;
   isDelivered = false;
   isSeen = false;
+  // showDeliveryStatus = false;
 
   constructor(
-    private authFacade: AuthFacade,
     private chatService: ChatService,
   ) {
 
   }
 
-  ngOnInit(): void {
-    
-    this.authFacade.getUser().subscribe(user => {
-        if(user!=null) {
-            const lastMessage = this.chatListItem.lastMessage;
-            this.isMyMessage = this.chatService.isMyMessage(lastMessage, user.id);
-            this.isDelivered = this.chatService.isMessageDelivered(lastMessage.messageStatuses)
-            this.isSeen = this.chatService.isMessageSeen(lastMessage.messageStatuses)
-            // console.log(this.isMyMessage, this.isDelivered, this.isSeen);
-        }
-    });
+  ngOnChanges(changes: SimpleChanges): void {
+    if (!changes['chatListItem']) return;
+
+    const lastMessage: MessageDto = this.chatListItem?.lastMessage as MessageDto;
+    const statuses = (lastMessage?.messageStatuses ?? []) as MessageStatusDto[];
+    this.isDelivered = statuses.length > 0 && this.chatService.isMessageDelivered(statuses);
+    this.isSeen = statuses.length > 0 && this.chatService.isMessageSeen(statuses);
+    // this.showDeliveryStatus = this.userId === lastMessage.messageBy.userId;
   }
+
+  get showDeliveryStatus() {
+    return this.userId === this.chatListItem?.lastMessage.messageBy.userId;
+  }
+
+  get chatName(): string {
+    if(this.chatListItem.isGroup){
+      return this.chatListItem.chatName ?? 'Group';
+    }
+    const otherParticipant = this.chatListItem.participants.find(p => p.userId !== this.userId);
+    if(!otherParticipant) return 'Chat';
+
+    return otherParticipant?.firstName + ' ' + otherParticipant?.lastName;
+  }
+
+  get chatImage(): string {
+    if(this.chatListItem.isGroup){
+      return 'assets/img/user/user0.jpg';
+    }
+    return this.chatListItem.participants.find(p => p.userId !== this.userId)?.avatar ?? 'assets/img/user/user0.jpg';
+  }
+
+  get messageContent(): string {
+    let messageToShow = this.chatListItem.lastMessage.content
+    if(messageToShow.length>=20){
+      messageToShow = messageToShow.substring(0, 20) + '...';
+    }
+    return messageToShow;
+  }
+
+  // showMessageStatus(): boolean {
+  //   return this.chatListItem.lastMessage.
+  // }
   
 }

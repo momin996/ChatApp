@@ -1,33 +1,56 @@
 import { Injectable } from "@angular/core";
-import { Location } from '@angular/common';
 import { Actions, createEffect, ofType } from "@ngrx/effects";
-import { catchError, exhaustMap, map, of, switchMap, tap } from "rxjs";
+import { catchError, EMPTY, exhaustMap, filter, from, map, of, switchMap, take, tap } from "rxjs";
 
 import { AuthService } from "../auth.service";
 import * as AuthActions from './auth.actions';
 import { ApiStringResp, AuthTokens } from "../models/auth-api.models";
-import { LocalStorageService } from "src/app/core/services/local-storage.service";
-import { ActivatedRoute, Router } from "@angular/router";
 import { ShowAlertAction } from "src/app/core/app-store/app.actions";
 import { User } from "../models/user.model";
 import { SignalRService } from "src/app/signalr.service";
+import { TokenStorageService } from "../token-storage.service";
 
 
 @Injectable()
 export class AuthEffects {
 
+    private isLoggingOut = false;
+
     constructor(
         private actions$: Actions,
         private authService: AuthService,
-        private localStorageService: LocalStorageService,
-        private router: Router,
-        private activatedRoute: ActivatedRoute,
-        private location: Location,
+        private tokenStorage: TokenStorageService,
         private signalRService: SignalRService
         
     ) {}
 
-    firstRoute: string = '/chat';
+    init$ = createEffect(() => {
+        return this.actions$.pipe(
+            ofType(AuthActions.initAuthAction),
+            exhaustMap(() => {
+        
+                const tokens = this.tokenStorage.getTokens();
+            
+                // No tokens → user is not logged in
+                if (!tokens) {
+                    return of(AuthActions.logoutAction());
+                }
+            
+                // Access token valid → fetch user
+                if (this.tokenStorage.hasValidAccessToken()) {
+                    return of(AuthActions.validTokenAction());
+                }
+            
+                // Access expired but refresh valid → refresh
+                if (this.tokenStorage.hasValidRefreshToken()) {
+                    return of(AuthActions.refreshTokenRequestAction({ authTokens: tokens }));
+                }
+            
+                // Both invalid → logout
+                return of(AuthActions.logoutAction());
+            })
+        );
+    });
 
     // Login
     login$ = createEffect(() => {
@@ -37,7 +60,7 @@ export class AuthEffects {
                 return this.authService.login(request.credentials).pipe(
                     map((response: AuthTokens) => {
                         if(response) {
-                            this.localStorageService.saveTokens(response);
+                            this.tokenStorage.setTokens(response)
                             return AuthActions.loginSuccessAction();
                         }
                         // handle failure response
@@ -55,9 +78,8 @@ export class AuthEffects {
             exhaustMap((action) => {
                 return this.authService.refreshToken(action.authTokens).pipe(
                     map((response: AuthTokens) => {
-                        console.log('got response from auth refresh token endpoint')
                         if(response){
-                            this.localStorageService.saveTokens(response);
+                            this.tokenStorage.setTokens(response)
                             return AuthActions.refreshTokenSuccessAction();
                         }
                         return AuthActions.refreshTokenFailureAction(response);
@@ -71,31 +93,27 @@ export class AuthEffects {
 
     // Login Success
     // Refresh Token Success
-    authenticationSuccessfull$ = createEffect(() => {
-        return this.actions$.pipe(
-            ofType(
-                AuthActions.loginSuccessAction,
-                AuthActions.refreshTokenSuccessAction
-            ),
-            map(() => AuthActions.userRequestAction())
-        );
-    });
-    
     getUser$ = createEffect(() => {
         return this.actions$.pipe(
             ofType(
-                AuthActions.userRequestAction
+                AuthActions.validTokenAction,
+                AuthActions.loginSuccessAction,
+                AuthActions.refreshTokenSuccessAction
             ),
-            exhaustMap((action) => {
+            exhaustMap(() => {
                 return this.authService.getUser().pipe(
                     map((response: User) => {
                         if(response){
+                            console.log('Got user response', response);
+                            
                             return AuthActions.userSuccessAction({user: response});
-                            // return AuthActions.firstRouteAction({routeUrl: this.firstRoute});
                         }
                         return AuthActions.logoutAction();
                     }),
-                    catchError(err => of(AuthActions.logoutAction()))
+                    catchError(err => {
+                        console.log('Error getting user: ', err);
+                        return of(AuthActions.logoutAction());
+                    })
                 )
             })
         )
@@ -104,12 +122,23 @@ export class AuthEffects {
     getUserSuccess$ = createEffect(() => {
         return this.actions$.pipe(
             ofType(AuthActions.userSuccessAction),
-            map(() => AuthActions.firstRouteAction({routeUrl: this.firstRoute}))
+            switchMap(() =>
+                from(this.signalRService.startConnection()).pipe(
+                    switchMap(() => {
+                        console.log('inside start connection switchMap');
+                        return this.signalRService.connectionReady$.pipe(
+                            filter(ready => ready),
+                            take(1),
+                            map(() => {
+                                console.log('SignalR Hub Connected: ', this.signalRService.isHubConnected);
+                                return AuthActions.authCompleteAction();
+                            })
+                        )
+                    })
+                )
+            )
         )
-    })
-
-// firstRouteAction has the routeUrl parameter so that if in the future we route the user to specific route based on its permisions
-// map(() => AuthActions.firstRouteAction({routeUrl: '/dashboard'}))
+    });
 
     forgotPasswordRequest$ = createEffect(() => {
         return this.actions$.pipe(
@@ -135,7 +164,7 @@ export class AuthEffects {
                         console.log(response);
                         return of(
                             ShowAlertAction({message: response.message, alertType: 'pass'}),
-                            AuthActions.firstRouteAction({routeUrl: '/auth/login'})
+                            // AuthActions.firstRouteAction({routeUrl: '/auth/login'})
                         );
                     }),
                     catchError(err => of(ShowAlertAction({message: err.error.message, alertType: 'fail'})))
@@ -144,41 +173,36 @@ export class AuthEffects {
             })
         );
     });
-
-
-    // Route after login
-    firstRoute$ = createEffect(() => {
-        return this.actions$.pipe(
-            ofType(AuthActions.firstRouteAction),
-            tap(action => {
-                let route = this.location.path();
-                console.log(`Current URL path: ${route}`);
-                const returnUrl = this.activatedRoute.snapshot.queryParams['returnUrl'] ?? null;
-                if(returnUrl !== null) {
-                    route = returnUrl;
-                    console.log('Routing to : ' + route);
-                }
-                if(route.includes('auth')) route = '/chat';
-                console.log('Routing to : ' + route);
-
-                // this.signalRService.connect();
-
-                this.router.navigateByUrl(route);
-            })
-        );
-    }, { dispatch: false } );
     
 
     // Logout
     logout$ = createEffect(() => {
         return this.actions$.pipe(
             ofType(AuthActions.logoutAction),
-            tap(() => {
-                this.localStorageService.removeTokens();
-                this.router.navigateByUrl('/auth/logout');
-                this.signalRService.stopConnection();
+            exhaustMap(() => {      // Why exhaustMap? => Prevents multiple API calls
+                // Prevent duplicate logout execution
+                if (this.isLoggingOut) return EMPTY;
+                this.isLoggingOut = true;
+
+                return this.authService.logout().pipe(
+                    catchError(() => of(null)), // ignore API failure
+                    map(() => AuthActions.logoutCompleteAction())
+                );
             })
         );
-    }, {dispatch: false});
+    });
 
+    logoutComplete$ = createEffect(
+        () => {
+            return this.actions$.pipe(
+                ofType(AuthActions.logoutCompleteAction),
+                tap(() => {
+                    this.tokenStorage.clearTokens();
+                    this.signalRService.stopConnection();
+                    this.isLoggingOut = false;
+                })
+            );
+        },
+        { dispatch: false }
+    );
 }

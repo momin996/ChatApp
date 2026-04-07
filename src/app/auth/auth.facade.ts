@@ -19,6 +19,10 @@ export class AuthFacade {
 
   constructor(private store: Store) {}
 
+  init() : void {
+    this.store.dispatch(AuthActions.initAuthAction());
+  }
+
   login(credentials: LoginRequestModel) {
     this.store.dispatch(AuthActions.loginRequestAction({credentials}));
   }

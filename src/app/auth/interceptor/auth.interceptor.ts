@@ -1,36 +1,51 @@
 import { HttpErrorResponse, HttpEvent, HttpHandler, HttpRequest, HttpResponse, } from '@angular/common/http';
 import { HttpInterceptor } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { EMPTY, Observable, throwError } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
+import { BehaviorSubject, EMPTY, Observable, throwError } from 'rxjs';
+import { catchError, filter, map, switchMap, take } from 'rxjs/operators';
 import { AuthFacade } from '../auth.facade';
-import { LocalStorageService } from 'src/app/core/services/local-storage.service';
+import { TokenStorageService } from '../token-storage.service';
+import { AuthService } from '../auth.service';
+import { AuthTokens } from '../models/auth-api.models';
 
 @Injectable()
 export class AuthInterceptor implements HttpInterceptor {
+
+    private isRefreshing = false;
+    private refreshTokenSubject = new BehaviorSubject<string | null>(null);
+
     constructor(
+        private tokenStorage: TokenStorageService,
+        private authService: AuthService,
         private authFacade: AuthFacade,
-        private localStorageService: LocalStorageService,
     //   private notificationService:NotificationsService
     ) {}
 
-    intercept(
-        req: HttpRequest<unknown>,
-        next: HttpHandler
-    ): Observable<HttpEvent<unknown>> {
+    intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
         
-        const accessToken = this.localStorageService.getAccessToken();
-        if (accessToken) {
-            req = req.clone({
-                setHeaders: { Authorization: `Bearer ${accessToken.token}` },
-                // !Attention: it used only at Fake API, remove it in real app
-                // params: req.params.set('auth-token', accessToken),
-            });
+        if (this.isAuthRequest(req.url)) {
+            return next.handle(req);
         }
 
-        return next.handle(req).pipe(s => this.handleErrors(s, req.url));
+        const token = this.tokenStorage.getAccessTokenValue();
+
+        if (token) {
+            req = this.addToken(req, token);
+        }
+        return next.handle(req).pipe(
+            catchError((error: HttpErrorResponse) => {
+      
+                if (error.status === 401) {
+                    return this.handle401(req, next);
+                }
+        
+                return throwError(() => error);
+            })
+        );
+        // return next.handle(req).pipe(s => this.handleErrors(s, req.url));
     }
 
+    // obsolete
     private handleErrors(source: Observable<HttpEvent<unknown>>, urlPath: string): Observable<HttpEvent<unknown>> {
         return source.pipe(
             catchError((error: Error | HttpErrorResponse) => {
@@ -38,25 +53,10 @@ export class AuthInterceptor implements HttpInterceptor {
                     // Server Error
                     let message = error.toString();
                     message = error.message ? error.message : message;
-                    /*if(error.error.errors !== undefined){
-                        if(error.error.errors){
-                        message = '';
-                        for (const key in error.error.errors) {
-                            error.error.errors[key].forEach(elem=>{
-                            message += `(${key+` : `+elem}) `;       
-                            })
-                        }
-                        }
-                    }*/
                     
                     if (error.status === 401 && !urlPath.includes('/auth/')) {
-                        return this.handle401();
+                        return this.handle401V1();
                     }
-                    // try to avoid errors on logout
-                    // therefore we check the url path of '/auth/'
-                    // if (error.status === 401 && !urlPath.includes('/auth/')) {
-                    //   return this.handle401();
-                    // }
                 }
 
                 // rethrow error
@@ -81,8 +81,73 @@ export class AuthInterceptor implements HttpInterceptor {
         );
     }
 
-    private handle401() {
+    // obsolete
+    private handle401V1() {
         this.authFacade.logout();
+        this.tokenStorage.clearTokens();
         return EMPTY;
+    }
+
+    private handle401(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
+
+        const tokens = this.tokenStorage.getTokens();
+    
+        // No tokens → logout
+        if (!tokens) {
+          this.triggerLogout();
+          return throwError(() => new Error('No tokens'));
+        }
+    
+        // Refresh token expired → logout
+        if (this.tokenStorage.isRefreshTokenExpired()) {
+          this.triggerLogout();
+          return throwError(() => new Error('Refresh token expired'));
+        }
+    
+        // 🧠 Start refresh if not already running
+        if (!this.isRefreshing) {
+            this.isRefreshing = true;
+            this.refreshTokenSubject.next(null);
+        
+            return this.authService.refreshToken(tokens).pipe(
+                switchMap((newTokens: AuthTokens) => {
+                    this.isRefreshing = false;
+            
+                    this.tokenStorage.setTokens(newTokens);
+            
+                    this.refreshTokenSubject.next(newTokens.accessToken.token);
+            
+                    return next.handle(this.addToken(req, newTokens.accessToken.token));
+                }),
+                catchError(err => {
+                    this.isRefreshing = false;
+                    this.triggerLogout();
+                    return throwError(() => err);
+                })
+            );
+        }
+    
+        // 🧠 Queue pending requests
+        return this.refreshTokenSubject.pipe(
+            filter(token => token !== null),
+            take(1),
+            switchMap(token => next.handle(this.addToken(req, token!)))
+        );
+    }
+
+    private isAuthRequest(url: string): boolean {
+        return url.includes('/Auth/');
+    }
+
+    private addToken(request: HttpRequest<any>, token: string) {
+        return request.clone({
+          setHeaders: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+    }
+
+    private triggerLogout() {
+        this.authFacade.logout();
     }
 }

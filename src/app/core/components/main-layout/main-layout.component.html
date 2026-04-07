@@ -1,0 +1,8 @@
+<div [class.dark-theme]="themeService.isDark()">
+    <app-header></app-header>
+
+    <div class="main-content d-flex flex-column hide-sidebar">
+        <router-outlet></router-outlet>
+        <div class="flex-grow-1"></div>
+    </div>
+</div>

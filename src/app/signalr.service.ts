@@ -1,53 +1,64 @@
 import { Injectable } from '@angular/core';
 import { HubConnection, HubConnectionBuilder, HubConnectionState, LogLevel } from '@microsoft/signalr';
-import { MessageRequest } from './chat/chat.types';
+import { MessageDto, MessageIdentifierDto, MessageRequest, MessagesBulkDeliveredOrSeenDto } from './chat/chat.types';
 import { AppConfigService } from './core/services/app-config.service';
-import { LocalStorageService } from './core/services/local-storage.service';
+import { BehaviorSubject, Subject } from 'rxjs';
+import { TokenStorageService } from './auth/token-storage.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class SignalRService {
+
+  private readonly signalRUrl: string;
   private hubConnection : HubConnection;
   private isConnected: boolean = false;
 
+  private connectionPromise: Promise<void> | null = null;
+  private connectionReadySubject = new BehaviorSubject<boolean>(false);
+  public connectionReady$ = this.connectionReadySubject.asObservable();
+
   constructor(
     private appConfig: AppConfigService,
-    private localStorageService: LocalStorageService,
+    private tokenStorage: TokenStorageService,
   ) {
-    
+    this.signalRUrl = this.appConfig.signalRUrl
   }
 
   // Build and start the SignalR connection
   public startConnection(): Promise<void> {
-    if (this.isConnected) {
-      console.log('SignalR is already connected.');
-      return Promise.resolve();
+    if (this.connectionPromise) {
+      console.log('SignalR is already in the process of connecting.');
+      return this.connectionPromise;
+      // return Promise.resolve();
     }
+    console.log('SignalR Starting connection...');
+    const token = this.tokenStorage.getAccessTokenValue();
 
-    const accessToken = this.localStorageService.getAccessToken().token;
     this.hubConnection = new HubConnectionBuilder()
-      .withUrl(
-        this.appConfig.signalRUrl,
-      {
-        withCredentials :false,
-        accessTokenFactory : ()=> accessToken
-      }
-      )
+      .withUrl(this.signalRUrl, { withCredentials :false, accessTokenFactory : ()=> token!})
       .withAutomaticReconnect()
       .configureLogging(LogLevel.Information)
       .build();
 
-    return this.hubConnection
-      .start()
-      .then(() => {
-        this.isConnected = true;
-        console.log('SignalR connection started');
-      })
-      .catch((err) => {
-        console.error('SignalR connection error: ', err);
-        this.isConnected = false;
-      });
+      this.connectionPromise = this.hubConnection.start()
+        .then(() => {
+          this.isConnected = true;
+          
+          this.registerHubMethods();
+
+          this.connectionReadySubject.next(true); // ✅ THIS IS KEY
+          
+        })
+        .catch(err => {
+          this.isConnected = false;
+          this.connectionPromise = null;
+          this.connectionReadySubject.next(false);
+          console.error('SignalR error:', err);
+          throw err;
+        });
+
+    return this.connectionPromise;
   }
 
   // Handle disconnection
@@ -62,20 +73,13 @@ export class SignalRService {
         console.log('SignalR connection stopped');
         this.isConnected = false;
       })
-      .catch((err) => console.error('Error stopping SignalR connection: ', err));
+      .catch((err) => {
+        console.error('Error stopping SignalR connection: ', err);
+      });
   }
 
-  // Subscribe to a server event
-  public on(eventName: string, callback: (...args: any[]) => void): void {
-    this.hubConnection.on(eventName, callback);
-  }
-
-  public send(eventName: string, data: any): Promise<void> {
-    return this.hubConnection.send(eventName, data);
-  }
-
-  public invoke(eventName: string, data: any): Promise<any> {
-    return this.hubConnection.invoke(eventName, data);
+  public get isHubConnected(): boolean {
+    return this.hubConnection.state === HubConnectionState.Connected;
   }
 
   testConnection(){
@@ -83,10 +87,110 @@ export class SignalRService {
     this.hubConnection.send('TestClientCall', this.hubConnection.connectionId);
   }
 
+  public messagesSeenForChatUser(chatId: number){
+    if (!this.isHubConnected) {
+      console.warn('SignalR not connected. Message not sent.');
+      return;
+    }
 
-  sendNewMessage(message: MessageRequest) {
-    this.hubConnection.send('NewMessage', message);
+    this.hubConnection.send('MessagesSeenForChatUser', chatId)
+      .catch(err => {
+        console.log('Error MessagesSeenForChatUser: ', err);
+      });
   }
+
+  public sendNewMessage(message: MessageRequest) {
+    if (!this.isHubConnected) return;
+
+    console.log('NewMessage API method called on HUB');
+    this.hubConnection.send('NewMessage', message)
+      .catch(err => {
+        console.log('Error sending new message: ', err);
+      });
+  }
+
+  public messageDeliveredToUser(messageIdentifier: MessageIdentifierDto){
+    if (!this.isHubConnected) return;
+
+    console.log('MessageDelivered API method called on HUB');
+    this.hubConnection.send('MessageDeliveredToUser', messageIdentifier)
+      .catch(err => {
+        console.log('Error MessageDeliveredToUser: ', err);
+      });
+  }
+  
+  public messageDeliveredAndSeenForUser(messageIdentifier: MessageIdentifierDto){
+    if (!this.isHubConnected) return;
+
+    console.log('MessageDeliveredAndSeen API method called on HUB');
+    this.hubConnection.send('MessageDeliveredAndSeenForUser', messageIdentifier)
+      .catch(err => {
+        console.log('Error MessageDeliveredAndSeenForUser: ', err);
+      });
+  }
+
+  private registerHubMethods(){
+    console.log('Registering SignalR events');
+
+    this.hubConnection.off('ReceiveMessage');
+    this.hubConnection.off('MessageDelivered');
+    this.hubConnection.off('MessageDeliveredAndSeen');
+    this.hubConnection.off('MessagesForChatSeen');
+    this.hubConnection.off('PendingMessagesDelivered');
+
+    this.receiveMessageAction();
+    this.messageDeliveredAction();
+    this.messageDeliveredAndSeenAction();
+    this.messagesForChatSeenAction();
+    this.pendingMessagesDeliveredAction();
+  }
+
+  private receiveMessageSubject = new Subject<MessageDto>();
+  receiveMessageEvent$ = this.receiveMessageSubject.asObservable();
+  private receiveMessageAction() {
+    this.hubConnection.on('ReceiveMessage', (message: MessageDto) => {
+      console.log('Receive Message Event triggered');
+      this.receiveMessageSubject.next(message);
+    });
+  }
+
+  private messageDeliveredSubject = new Subject<MessageIdentifierDto>();
+  messageDeliveredEvent$ = this.messageDeliveredSubject.asObservable();
+  private messageDeliveredAction() {
+    this.hubConnection.on('MessageDelivered', (messageIdentifier: MessageIdentifierDto) => {
+      console.log('Message Delivered event triggered');
+      this.messageDeliveredSubject.next(messageIdentifier);
+    });
+  }
+
+  private messageDeliveredAndSeenSubject = new Subject<MessageIdentifierDto>();
+  messageDeliveredAndSeenEvent$ = this.messageDeliveredAndSeenSubject.asObservable();
+  private messageDeliveredAndSeenAction() {
+    this.hubConnection.on('MessageDeliveredAndSeen', (messageIdentifier: MessageIdentifierDto) => {
+      console.log('Message Delivered and Seen event triggered');
+      this.messageDeliveredAndSeenSubject.next(messageIdentifier);
+    });
+  }
+
+  private messagesForChatSeenSubject = new Subject<MessagesBulkDeliveredOrSeenDto>();
+  messagesForChatSeenEvent$ = this.messagesForChatSeenSubject.asObservable();
+  private messagesForChatSeenAction() {
+    this.hubConnection.on('MessagesForChatSeen', (messageIdentifiers: MessagesBulkDeliveredOrSeenDto) => {
+      console.log('Message Seen for chat event triggered');
+      this.messagesForChatSeenSubject.next(messageIdentifiers);
+    });
+  }
+
+  
+  private pendingMessagesDeliveredSubject = new Subject<MessagesBulkDeliveredOrSeenDto[]>();
+  pendingMessagesDeliveredEvent$ = this.pendingMessagesDeliveredSubject.asObservable();
+  private pendingMessagesDeliveredAction() {
+    this.hubConnection.on('PendingMessagesDelivered', (messageIdentifiers: MessagesBulkDeliveredOrSeenDto[]) => {
+      console.log('Pending Messages Delivered event triggered');
+      this.pendingMessagesDeliveredSubject.next(messageIdentifiers);
+    });
+  }
+  
 }
 
 

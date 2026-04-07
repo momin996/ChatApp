@@ -1,19 +1,18 @@
 <li class="position-relative d-flex align-items-center justify-content-space-between cursor-pointer">
     <div class="content d-flex align-items-center">
         <div class="img position-relative">
-            <img src="assets/img/user/user11.jpg" width="45" class="rounded-circle" alt="user">
+            <img [src]="chatImage" width="45" class="rounded-circle" alt="user">
             <span class="active-status"></span>
         </div>
         <div class="title ms-10">
-            <h5 class="fs-15 mb-4">{{ chatListItem.chatName }}</h5>
-            <span class="d-block gray-color fs-14">{{ chatListItem.lastMessage.content }}</span>
+            <h5 class="fs-15 mb-4">{{ chatName }}</h5>
+            <span class="d-block gray-color fs-14">{{ messageContent }}</span>
             <!-- <span class="d-block green-color fs-14">Typing...</span> -->
         </div>
     </div>
     <div class="info" align="end">
         <span class="time fs-13 muted-color mb-3 d-block">{{chatListItem.lastMessage.timestamp | date : 'MM/dd/yyyy'}}</span>
-        <span class="badge" *ngIf="!isMyMessage">2</span>
-        <span *ngIf="isMyMessage" [ngClass]="{'main-color': isSeen && isDelivered}" class="lh-1">
+        <span [ngClass]="{'main-color': isSeen && isDelivered}" class="lh-1" *ngIf="showDeliveryStatus">
             <i *ngIf="isDelivered" class="ri-check-double-line"></i>
             <i *ngIf="!isDelivered && !isSeen" class="ri-check-line"></i>
         </span>

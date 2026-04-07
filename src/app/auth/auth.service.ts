@@ -43,4 +43,9 @@ export class AuthService {
     return this.http.post<ApiStringResp>(apiEndpoint, resetPassword);
   }
 
+  logout(): Observable<void> {
+    const apiEndpoint = `${this.apiUrl}/Auth/Logout`;
+    return this.http.post<void>(apiEndpoint, {});
+  }
+
 }

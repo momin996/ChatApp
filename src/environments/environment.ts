@@ -5,6 +5,8 @@ export const Environment = {
     
     apiUrl: 'https://localhost:7189/api',
     signalRUrl: 'https://localhost:7189/chathub',
+    // apiUrl: 'http://localhost:8001/api',
+    // signalRUrl: 'http://localhost:8001/chathub',
 
     appVersion: `v1-dev`,
     

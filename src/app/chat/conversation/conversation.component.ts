@@ -1,7 +1,7 @@
 import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
 import { CustomizerSettingsService } from 'src/app/core/services/customizer-settings.service';
 import { ChatService } from '../chat.service';
-import { ChatDetails, MediaType, Message, MessageRequest, MessageStatus } from '../chat.types';
+import { ChatDto, MediaType, MessageDto, MessageRequest, MessageStatusDto, NewChatWithFirstMessageRequest } from '../chat.types';
 import { User } from 'src/app/auth/models/user.model';
 import { SignalRService } from 'src/app/signalr.service';
 
@@ -10,112 +10,134 @@ import { SignalRService } from 'src/app/signalr.service';
     templateUrl: './conversation.component.html',
     styleUrl: './conversation.component.scss',
 })
-export class ConversationComponent implements OnInit {
-    @Input() user: User;
-    @Input() conversation: ChatDetails;
+export class ConversationComponent implements OnInit, OnChanges {
+  @Input() user: User;
+  @Input() conversation: ChatDto;
 
-    constructor(
-      public themeService: CustomizerSettingsService,
-      private chatService: ChatService,
-      private signalRService: SignalRService
-    ) {}
+
+  constructor(
+    public themeService: CustomizerSettingsService,
+    private chatService: ChatService,
+    private signalRService: SignalRService
+  ) {}
+
+
+  ngOnInit(): void {
+  }
   
-    ngOnInit(): void {
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['conversation']) {
+      this.markConversationSeen();
 
-      console.log('Opened conversation component');
-      this.signalRService.invoke('ChatMessagesSeenByUser', this.conversation.id)
-        .then((updatedChat: ChatDetails) => {
-          console.log('ChatMessagesSeenByUser request completed.');
-          console.log('Updating conversation from server response');
-          // this.chatService.updateLastMessageInChatSidebar(updatedChat.messages[updatedChat.messages.length-1])
-          this.chatService.updateConversation(updatedChat);
-        })
-        .catch((err) => {
-          console.error("Error sending message:", err);
-        });
-      
-      // this.signalRService.on('ReceiveMessage', (message: Message) => {
-        // this.conversation.messages.push(message);
-        // this.chatService.addMessageToConversation(message);
-
-        // this.signalRService.send('MessageDeliveredToUser', message.id)
-        //   .catch((err) => {
-        //       console.error("Error while updated isDelivered in message's message status:", err);
-        //   });
-
-        // this.signalRService.send('MessageSeenByUser', message.id)
-        //   .catch((err) => {
-        //       console.error("Error while updated isSeen in message's message status:", err);
-        //   });
-      // });
-
-      this.signalRService.on('MessageUpdated', (updatedMessage: Message)=> {
-        console.log('Updated Message recieved from server');
-        this.chatService.updateMessageInConversation(updatedMessage);
-      })
-
-      this.signalRService.on('ChatUpdated', (updatedChat: ChatDetails) => {
-        console.log('Updated Chat recieved from server');
-        this.chatService.updateLastMessageInChatSidebar(updatedChat.messages[updatedChat.messages.length-1])
-        this.chatService.updateConversation(updatedChat);
-      })
-    }
-
-    get chatName(){
-      if(this.conversation.isGroup){
-        return this.conversation.chatName;
+      if(!changes['conversation'].firstChange){
+        this.messageContent = '';
       }
-      const otherUser = this.conversation.messages.filter(m => m.sender.id !== this.user.id)[0]?.sender;
-      const otherUserAvatar = otherUser.avatar
-      return `${otherUser.firstName} ${otherUser.lastName}`;
+    }
+  }
+
+
+  get chatImage(): string {
+    if(this.conversation.isGroup){
+      return 'assets/img/user/user0.jpg';
     }
 
-    messageContent: string = '';
-    onSubmit() {
-        if (this.messageContent.trim()) {
-            const message: MessageRequest = {
-              chatId: this.conversation.id,
-              content: this.messageContent,
-              mediaType: MediaType.Text,
-            }
-            
-            this.signalRService.invoke('NewMessage', message)
-              .then((newMessage: Message) => {
-                this.chatService.updateLastMessageInChatSidebar(newMessage);
-                this.chatService.addMessageToConversation(newMessage);
-              })
-              .catch(err => {
-                console.log('Error sending new message: ', err);
-              });
-            this.messageContent = ''; // Clear the input after submission
-        }
+    if(this.conversation.isDraft){
+      return this.conversation.draftContact!.avatar!;
     }
 
-    isMessageByMe(messageUserId: number) : boolean {
-      const isMessageByMe = messageUserId==this.user.id;
-      // console.log('Message by me: ', isMessageByMe);
-      return isMessageByMe;
+    const otherSender = this.conversation.participants.find(p => p.userId !== this.user.id);
+    //.messages.find(m => m.sender.id !== this.user.id)?.sender;
+    if(otherSender){
+      return otherSender.avatar!;
     }
 
-    isDelivered(messageStatuses: MessageStatus[]){
-      const isDelivered = messageStatuses.every(status => status.isDelivered);
-      // console.log('Is Delivered: ', isDelivered);
-      return isDelivered;
-      
+    return 'assets/img/user/user0.jpg';
+  }
+  
+  get chatName(): string {
+
+    if(this.conversation.isGroup){
+      return this.conversation.chatName ?? 'Group';
     }
 
-    isSeen(messageStatuses: MessageStatus[]){
-      const isSeen = messageStatuses.every(status => status.isSeen);
-      // console.log('Is Seen: ', isSeen);
-      
-      return isSeen;
+    if(this.conversation.isDraft){
+      const draftContact = this.conversation.draftContact!;
+      return draftContact.firstName + ' ' + draftContact.lastName;
     }
 
-    toggleTheme() {
-        this.themeService.toggleTheme();
+    const otherSender = this.conversation.participants.find(p => p.userId !== this.user.id);
+    //.messages.find(m => m.sender.id !== this.user.id)?.sender;
+    if(otherSender){
+      return `${otherSender.firstName} ${otherSender.lastName}`.trim() || 'Chat';
     }
 
-    toggleRTLEnabledTheme() {
-        this.themeService.toggleRTLEnabledTheme();
-    }
+
+    return this.conversation.chatName ?? 'Chat';
+  }
+
+  messageContent: string = '';
+  onSubmit() {
+      if (this.messageContent.trim()) {
+          // Draft flow: create chat with first message via REST endpoint
+          if (this.conversation?.isDraft && this.conversation?.draftContact) {
+            const req: NewChatWithFirstMessageRequest = {
+              chatName: null,
+              chatParticipantIds: [this.conversation.draftContact.contactId],
+              isGroup: false,
+              message: {
+                content: this.messageContent,
+                mediaUrl: null,
+                mediaType: MediaType.Text,
+              },
+            };
+
+            this.chatService.startNewChatWithFirstMessage(req).subscribe({
+              next: (res) => {
+                if (res?.isSuccess && res?.response?.id) {
+                  this.chatService.updateConversation(res.response);
+                }
+              },
+              error: (err) => {
+                console.error('Error creating new chat with first message:', err);
+              },
+            });
+            this.messageContent = '';
+            return;
+          }
+
+          // Existing chat flow: send message via SignalR
+          const message: MessageRequest = {
+            chatId: this.conversation.id,
+            content: this.messageContent,
+            mediaType: MediaType.Text,
+          };
+
+          this.signalRService.sendNewMessage(message);
+          this.messageContent = ''; // Clear the input after submission
+      }
+  }
+
+  isMessageByMe(messageUserId: number) : boolean {
+    const isMessageByMe = messageUserId==this.user.id;
+    return isMessageByMe;
+  }
+
+  isDelivered(messageStatuses: MessageStatusDto[]){
+    const isDelivered = messageStatuses.every(status => status.isDelivered);
+    return isDelivered;
+    
+  }
+
+  isSeen(messageStatuses: MessageStatusDto[]){
+    const isSeen = messageStatuses.every(status => status.isSeen);
+    return isSeen;
+  }
+
+  trackByMessageId(index: number, message: MessageDto) {
+    return message.id;
+  }
+
+  private markConversationSeen(){
+    this.signalRService.messagesSeenForChatUser(this.conversation.id);
+  }
 }

@@ -18,6 +18,15 @@ const reducer = createReducer(
     initialAuthState,
     
     on(
+        AuthActions.initAuthAction,
+        (state): AuthState => ({
+            ...state,
+            isLoading: true,
+            tokenStatus: TokenStatus.VALIDATING
+        })
+    ),
+
+    on(
         AuthActions.loginRequestAction,
         AuthActions.refreshTokenRequestAction,
         (state): AuthState => ({
@@ -28,12 +37,14 @@ const reducer = createReducer(
     ),
 
     on(
+        AuthActions.validTokenAction,
         AuthActions.loginSuccessAction,
         AuthActions.refreshTokenSuccessAction,
-        (state, action): AuthState => ({
+        (state): AuthState => ({
           ...state,
-          isAuthenticated: true,
-          isLoading: false,
+          isAuthenticated: false,
+        //   isAuthenticated: true,
+        //   isLoading: false,
           tokenStatus: TokenStatus.VALID,
         })
     ),
@@ -57,11 +68,22 @@ const reducer = createReducer(
           ...state,
           user: action.user,
         })
-      ),
+    ),
+
+    on(
+        AuthActions.authCompleteAction,
+        (state) : AuthState => ({
+            ...state,
+            isAuthenticated: true,
+            isLoading: false,
+        })
+    ),
+
     on(
         AuthActions.userFailureAction,
-        (): AuthState => ({
+        (_, action): AuthState => ({
             ...initialAuthState,
+            error: action.error
         })
     ),
 

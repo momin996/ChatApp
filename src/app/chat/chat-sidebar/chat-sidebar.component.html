@@ -4,35 +4,57 @@
 -->
 
 <mat-card
-    class="mb-25 chat-sidebar tagus-card"
+    class="pb-0 chat-sidebar tagus-card"
     [class.component-dark-theme]="themeService.isDark()"
-    [class.component-rtl-enabled]="themeService.isRTLEnabled()"
 >
+    <!-- Header Section -->
     <mat-card-header>
         <h5 class="mb-0">Messages</h5>
-        <span class="main-color"><mat-icon>add_circle</mat-icon></span>
+        <button
+            mat-icon-button
+            type="button"
+            class="main-color"
+            [matMenuTriggerFor]="contactsMenu"
+            aria-label="Start new chat"
+        >
+            <mat-icon>add_circle</mat-icon>
+        </button>
     </mat-card-header>
+
     <mat-card-content>
+        <!-- Chats Search -->
         <form class="search-box position-relative">
-            <input type="text" class="input-search d-block" placeholder="Search here..">
+            <input type="text" class="input-search d-block" placeholder="Search here.." (input)="onSearch($event)">
             <button type="submit"><i class="ri-search-line"></i></button>
         </form>
-        <ng-container *ngIf="chatList.length>0; else loading">
-            <ng-scrollbar visibility="hover">
-                <div class="sidebar-body">
-                    <span class="sub-title d-block muted-color fw-normal fs-14 position-relative"><i class="flaticon-comment"></i> ALL MESSAGES</span>
-                    <ul class="sidebar-list ps-0 list-unstyled mb-0">
-                        <app-chat-list-item *ngFor="let chatListItem of chatList"
-                            [chatListItem] = "chatListItem"
-                            (click)="onChatClicked(chatListItem.id)"
-                        ></app-chat-list-item>
-                    </ul>
-                </div>
-            </ng-scrollbar>
+        
+        <ng-container *ngIf="chatList$ | async as chatList; else loading">
+            <ng-container *ngIf="chatList.length > 0; else empty">
+                <ng-scrollbar visibility="hover" #scrollbar>
+                    <div class="sidebar-body">
+                        <span class="sub-title d-block muted-color fw-normal fs-14 position-relative"><i class="flaticon-comment"></i> ALL MESSAGES</span>
+                        <ul class="sidebar-list ps-0 list-unstyled mb-0">
+                            <app-chat-list-item *ngFor="let chatListItem of chatList"
+                                [userId]="userId"
+                                [chatListItem]="chatListItem"
+                                (click)="onChatClicked(chatListItem.id)"
+                            ></app-chat-list-item>
+                        </ul>
+                    </div>
+                </ng-scrollbar>
+            </ng-container>
         </ng-container>
         <ng-template #loading>
             <div class="loading-indicator">Loading...</div>
         </ng-template>
+        <ng-template #empty>
+            <div class="loading-indicator">No chats yet</div>
+        </ng-template>
 
     </mat-card-content>
 </mat-card>
+
+<!-- Contact Dropdown Menu -->
+<mat-menu #contactsMenu="matMenu" class="contacts-menu-panel" xPosition="before" yPosition="below" [overlapTrigger]="false">
+    <app-contacts-dropdown (contactSelected)="onContactSelected($event)"></app-contacts-dropdown>
+</mat-menu>
