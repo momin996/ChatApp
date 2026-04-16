@@ -1,75 +1,92 @@
-import { AfterViewInit, Component, Input, OnInit, ViewChild } from '@angular/core';
-import { CustomizerSettingsService } from '../../core/services/customizer-settings.service'
-import { ChatService } from '../chat.service';
-import { ChatListItem } from '../chat.types';
-import { ContactDto } from 'src/app/contact/contact.type';
-import { Observable } from 'rxjs';
+import { Component, DestroyRef, ElementRef, Input, OnInit, ViewChild } from '@angular/core';
+import { debounceTime, distinctUntilChanged, Observable, Subject } from 'rxjs';
+import { Store } from '@ngrx/store';
+
+import { CustomizerSettingsService } from '../../core/services/customizer-settings.service';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+
+import { ChatListItem } from '../models/chat.types';
+import * as ChatActions from '../store/chat.actions';
+import { selectChatList, selectChatListLoading } from '../store/chat.selectors';
 
 @Component({
-    selector: 'app-chat-sidebar',
-    templateUrl: './chat-sidebar.component.html',
-    styleUrls: ['./chat-sidebar.component.scss']
+  selector: 'app-chat-sidebar',
+  templateUrl: './chat-sidebar.component.html',
+  styleUrls: ['./chat-sidebar.component.scss'],
 })
-export class ChatSidebarComponent implements OnInit, AfterViewInit {
+export class ChatSidebarComponent implements OnInit {
+  @Input() userId: number;
+  chatList$: Observable<ChatListItem[]>;
+  loading$: Observable<boolean>;
+  private search$ = new Subject<string>();
+  selectedChatId: number | null;
+  @ViewChild('scrollContainer') scrollContainer!: ElementRef<HTMLDivElement>;
+  searchTerm: string = '';
+  private isLoadingFromScroll: boolean = false;
 
-    @Input() userId:number;
-    chatList$: Observable<ChatListItem[]> = this.chatService.chatList$;
-    chats: ChatListItem[] = [];
+  constructor(
+    public themeService: CustomizerSettingsService,
+    private store: Store,
+    private destroyRef: DestroyRef,
+  ) {
+    this.chatList$ = this.store.select(selectChatList);
+    this.loading$ = this.store.select(selectChatListLoading);
+  }
 
-    constructor(
-        public themeService: CustomizerSettingsService,
-        private chatService: ChatService,
-    ) {}
-    
-    ngOnInit(): void {
-        this.chatService.loadChats(true).subscribe();
+  ngOnInit(): void {
+    this.isLoadingFromScroll = false;
+    this.search$
+      .pipe(
+        debounceTime(300),
+        distinctUntilChanged(),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe((term) => {
+        this.searchTerm = term;
+        this.store.dispatch(ChatActions.loadChats({ reset: true, searchTerm: term }));
+      });
+  }
+
+  onSearch(event: Event) {
+    const input = event.target as HTMLInputElement
+    this.search$.next(input.value);
+  }
+
+  onScroll() {
+    const el = this.scrollContainer.nativeElement;
+
+    const scrollTop = el.scrollTop;
+    const scrollHeight = el.scrollHeight;
+    const clientHeight = el.clientHeight;
+
+    const threshold = 100; // px before reaching bottom
+
+    const isNearBottom = scrollTop + clientHeight >= scrollHeight - threshold;
+
+    if (isNearBottom) {
+        this.loadMoreChats();
     }
+  }
 
-    @ViewChild('scrollbar', { static: false }) scrollbar: any;
+  private loadMoreChats() {
+    if (this.isLoadingFromScroll) return;
 
-    ngAfterViewInit() {
-        setTimeout(() => {
-            const viewport = this.scrollbar?.viewport?.nativeElement;
+    const el = this.scrollContainer.nativeElement;
+
+    this.isLoadingFromScroll = true;
+
+    this.store.dispatch(
+      ChatActions.loadChats({reset: false, searchTerm: this.searchTerm }),
+    );
+  }
+
+  chatSelected(chatId: number){
+    this.selectedChatId = chatId;
+    console.log("Selected chat id: " + this.selectedChatId);
     
-            if (!viewport) {
-                console.error('Viewport not found');
-                return;
-            }
-    
-            viewport.addEventListener('scroll', this.onScroll.bind(this));
-        }, 100);
-    }
+  }
 
-    onScroll(event: any) {
-        const target = event.target;
-    
-        const atBottom =
-            target.scrollTop + target.clientHeight >= target.scrollHeight - 50;
-    
-        if (atBottom) {
-            console.log('Reached bottom'); // debug
-            this.chatService.loadChats();
-        }
-    }
-
-    private searchTimeout: any;
-
-    onSearch(event: any) {
-        const value = event.target.value;
-
-        clearTimeout(this.searchTimeout);
-
-        this.searchTimeout = setTimeout(() => {
-            this.chatService.setSearch(value);
-        }, 300);
-    }
-    
-    onChatClicked(chatId: number) {
-        this.chatService.getConversation(chatId);
-    }
-
-    onContactSelected(contact: ContactDto): void {
-        this.chatService.openConversationForContact(contact);
-    }
-
+  trackByChatId(index: number, item: ChatListItem) {
+    return item.id;
+  }
 }

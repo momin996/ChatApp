@@ -3,6 +3,6 @@
         <app-chat-sidebar [userId]="user.id"></app-chat-sidebar>
     </div>
     <div class="col-lg-8 col-xxl-9">
-        <app-conversation *ngIf="conversation$ | async as conversation" [user]="user" [conversation]="conversation"></app-conversation>
+        <app-conversation *ngIf="chat$ | async as chat" [chat]="chat" [userId]="user.id"></app-conversation>
     </div>
 </div>

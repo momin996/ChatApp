@@ -17,9 +17,6 @@ export const VALID_TOKEN = '[Auth] Valid Access Token';
 export const USER_SUCCESS = '[Auth] User Success';
 export const USER_FAILURE = '[Auth] User Failure';
 
-const FORGOT_PASSWORD_REQUEST = '[Auth] Forgot Password Request';
-const RESET_PASSWORD_REQUEST = '[Auth] Reset Password Request';
-
 export const LOGOUT = '[Auth] Logout';
 export const LOGOUT_COMPLETE = '[Auth] Logout Complete';
 
@@ -52,13 +49,7 @@ export const refreshTokenRequestAction = createAction(REFRESH_TOKEN_REQUEST, pro
 
 export const refreshTokenSuccessAction = createAction(REFRESH_TOKEN_SUCCESS);
 
-export const refreshTokenFailureAction = createAction(REFRESH_TOKEN_FAILURE, props<{ error: Error }>());
-
-
-// Forgot Password
-export const forgotPasswordRequestAction = createAction(FORGOT_PASSWORD_REQUEST, props<{email: string}>());
-
-export const resetPasswordRequestAction = createAction(RESET_PASSWORD_REQUEST, props<{resetPassword: ResetPasswordRequestModel}>());
+export const refreshTokenFailureAction = createAction(REFRESH_TOKEN_FAILURE, props<{ error: Error }>())
 
 
 // Logout

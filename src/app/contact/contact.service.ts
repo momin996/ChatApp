@@ -1,9 +1,8 @@
 import { Injectable } from '@angular/core';
-import { AppConfigService } from '../core/services/app-config.service';
-import { User } from '../auth/models/user.model';
-import { ContactDto, ContactListingResponse } from './contact.type';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { AppConfigService } from '../core/services/app-config.service';
+import { ContactDto } from './contact.type';
 
 @Injectable({
   providedIn: 'root'
@@ -14,12 +13,6 @@ export class ContactService {
 
   constructor(private http: HttpClient, appConfig: AppConfigService) {
     this.apiUrl = appConfig.getAPIUrl();
-  }
-
-  public getContacts() : Observable<ContactListingResponse> {
-    const apiEndpoint = `${this.apiUrl}/Users/Contacts`;
-    return this.http.get<ContactListingResponse>(apiEndpoint)
-            // .pipe(map(r => r.response));
   }
 
   /**

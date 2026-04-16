@@ -1,7 +1,13 @@
-import { User } from "../auth/models/user.model";
-import { ContactDto } from "../contact/contact.type";
+import { ContactDto } from "../../contact/contact.type";
 
 // Requests
+
+export class ChatListRequest {
+    pageSize: number = 10;
+    search: string | null;
+    beforeId: number | null;
+    beforeTimestamp: Date | null;
+}
 
 export class GeneralFilters {
     page = 1;
@@ -11,21 +17,19 @@ export class GeneralFilters {
     hasMore = true;
 }
 
-export interface NewChatRequest {
-    chatName: string | null;
-    chatParticipantIds: number[];
-    isGroup: boolean;
-}
 
 // should this be MessageRequest with the id being sent as route param in api call
-export interface FirstMessageInChatRequest {
+export interface FirstMessageRequest {
     content: string;
     mediaUrl: string | null;
     mediaType: MediaType;
 }
 
-export interface NewChatWithFirstMessageRequest extends NewChatRequest {
-    message: FirstMessageInChatRequest;
+export interface NewChatRequest {
+    chatName: string | null;
+    chatParticipantIds: number[];
+    isGroup: boolean;
+    message: FirstMessageRequest;
 }
 
 export interface MessageRequest {
@@ -44,45 +48,44 @@ export interface ListResponse<T> {
     total: number;
 }
 
-export interface ChatResponse {
-    response: ChatDto;
-    isSuccess: boolean;
-    statusCode: number;
-    message: string;
-}
-
-// DTO returned by GET `${apiBase}/Chats` (sidebar list)
-export interface ChatSidebarLastMessageDto {
-    content: string;
-    timestamp: string;
-    messageStatuses: MessageStatusDto[];
-}
-
-export interface ChatSidebarSummaryDto {
-    id: number;
-    chatName: string | null;
-    isGroup: boolean;
-    lastMessage: ChatSidebarLastMessageDto;
+export interface CursorListResponse<T> {
+    items: T[];
+    hasMore: boolean;
+    beforeId: number | null;
+    beforeTimestamp : Date | null;
+//     public IReadOnlyList<T> Items { get; set; } = [];
+// public bool HasMore { get; set; }
+// public int BeforeId { get; set; }
+// public DateTime BeforeTimestamp { get; set; }
 }
 
 
 // Models
 export interface ChatListItem {
     id: number;
-    chatName: string | null;
+    chatName?: string;
     isGroup: boolean;
     // Sidebar endpoint returns a slim lastMessage; conversation returns full Message(s)
-    lastMessage: MessageDto;
-    participants: ChatParticipantDto[];
+    lastMessage: MessageForChatSidebar;
+    otherUser: ChatParticipantDto | null;
+    // participants: ChatParticipantDto[];
 }
 
-export interface MessageDto {
+export interface Message {
     id: number;
     chatId: number;
-    timestamp: string;
     content: string;
+    timestamp: string;
     messageStatuses: MessageStatusDto[];
     messageBy: ChatParticipantDto;
+}
+
+export interface MessageForChatSidebar {
+    id: number;
+    content: string;
+    timestamp: string;
+    sendUserId: number;
+    messageStatuses: MessageStatusDto[];
 }
 
 export interface MessageIdentifierDto {
@@ -109,25 +112,23 @@ export interface ChatParticipantDto {
     avatar?: string;
 }
 
-export interface ChatDto {
+export interface ChatResponse {
+    chat: Chat;
+    messages: Message[];
+    hasMore: boolean;
+}
+
+export interface Chat {
     id: number;
     chatName?: string;
     isGroup: boolean;
-    messages: MessageDto[];
+    // messages: Message[];
     participants: ChatParticipantDto[];
     // Draft state used when starting a new chat (no chat yet)
     isDraft?: boolean;
     draftContact?: ContactDto;
 }
 
-export interface Message {
-    id: number;
-    chatId: number;
-    sender: User;
-    timestamp: string;
-    content: string;
-    messageStatuses: MessageStatusDto[];
-}
 
 export interface MessageStatusDto {
     isDelivered: boolean;

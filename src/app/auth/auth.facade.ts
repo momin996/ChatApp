@@ -30,16 +30,4 @@ export class AuthFacade {
   logout() {
     this.store.dispatch(AuthActions.logoutAction());
   }
-
-  forgotPassword(email: string) {
-    this.store.dispatch(AuthActions.forgotPasswordRequestAction({email: email}));
-  }
-
-  resetPassword(resetPassword: ResetPasswordRequestModel){
-    this.store.dispatch(AuthActions.resetPasswordRequestAction({resetPassword: resetPassword}));
-  }
-
-
-  
-
 }

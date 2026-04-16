@@ -10,16 +10,6 @@ import { ResetPasswordComponent } from './components/reset-password/reset-passwo
 import { SharedModule } from '../shared/shared.module';
 import { noAuthGaurd } from './gaurds/no-auth.guard';
 
-
-// const authRoutes: Routes = [
-//   {path: 'register', component: RegisterComponent},
-//   {path: 'login', component: LoginComponent},
-//   {path: 'confirm-mail', component: ConfirmMailComponent},
-//   {path: 'logout', component: LogoutComponent},
-//   {path: 'forgot-password', component: ForgotPasswordComponent},
-//   {path: 'reset-password', component: ResetPasswordComponent},
-// ]
-
 const authRoutes: Routes = [
   { path: 'login', component: LoginComponent, canActivate: [noAuthGaurd] },
   { path: 'register', component: RegisterComponent, canActivate: [noAuthGaurd] },
@@ -38,6 +28,8 @@ const authRoutes: Routes = [
     ResetPasswordComponent
   ],
   imports: [
+    // StoreModule.forFeature(AUTH_FEATURE_KEY, authReducer),
+    // EffectsModule.forFeature([AuthEffects]),
     RouterModule.forChild(authRoutes),
     SharedModule
   ],

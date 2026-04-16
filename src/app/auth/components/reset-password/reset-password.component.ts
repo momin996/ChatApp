@@ -46,7 +46,7 @@ export class ResetPasswordComponent implements OnInit {
                     confirmPassword: confirmPassword,
                     token: this.token
                 }
-                this.authFacade.resetPassword(requestBody);
+                // this.authFacade.resetPassword(requestBody);
             }
         }
     }

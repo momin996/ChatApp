@@ -1,6 +1,8 @@
-import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
-import { ChatService } from '../../chat.service';
-import { ChatListItem, MessageDto, MessageStatusDto } from '../../chat.types';
+import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
+import { Store } from '@ngrx/store';
+import { ChatListItem, Message, MessageStatusDto } from '../../models/chat.types';
+import { isMessageDelivered, isMessageSeen } from '../../chat.utils';
+import * as ChatActions from '../../store/chat.actions';
 
 @Component({
   selector: 'app-chat-list-item',
@@ -12,13 +14,14 @@ export class ChatListItemComponent implements OnChanges {
   
   @Input() userId:number;
   @Input() chatListItem: ChatListItem;
+  @Output() chatSelected = new EventEmitter<number>();
   
   isDelivered = false;
   isSeen = false;
   // showDeliveryStatus = false;
 
   constructor(
-    private chatService: ChatService,
+    private store: Store,
   ) {
 
   }
@@ -26,22 +29,26 @@ export class ChatListItemComponent implements OnChanges {
   ngOnChanges(changes: SimpleChanges): void {
     if (!changes['chatListItem']) return;
 
-    const lastMessage: MessageDto = this.chatListItem?.lastMessage as MessageDto;
-    const statuses = (lastMessage?.messageStatuses ?? []) as MessageStatusDto[];
-    this.isDelivered = statuses.length > 0 && this.chatService.isMessageDelivered(statuses);
-    this.isSeen = statuses.length > 0 && this.chatService.isMessageSeen(statuses);
+    const statuses = (this.chatListItem?.lastMessage?.messageStatuses ?? []) as MessageStatusDto[];
+    this.isDelivered = statuses.length > 0 && isMessageDelivered(statuses);
+    this.isSeen = statuses.length > 0 && isMessageSeen(statuses);
     // this.showDeliveryStatus = this.userId === lastMessage.messageBy.userId;
   }
 
+  onChatClicked(chatId: number) {
+    this.store.dispatch(ChatActions.loadConversation({ chatId, reset: true }));
+    this.chatSelected.next(chatId);
+  }
+
   get showDeliveryStatus() {
-    return this.userId === this.chatListItem?.lastMessage.messageBy.userId;
+    return this.userId === this.chatListItem?.lastMessage.sendUserId;
   }
 
   get chatName(): string {
     if(this.chatListItem.isGroup){
       return this.chatListItem.chatName ?? 'Group';
     }
-    const otherParticipant = this.chatListItem.participants.find(p => p.userId !== this.userId);
+    const otherParticipant = this.chatListItem.otherUser;
     if(!otherParticipant) return 'Chat';
 
     return otherParticipant?.firstName + ' ' + otherParticipant?.lastName;
@@ -49,15 +56,15 @@ export class ChatListItemComponent implements OnChanges {
 
   get chatImage(): string {
     if(this.chatListItem.isGroup){
-      return 'assets/img/user/user0.jpg';
+      return 'assets/img/user/group.jpg';
     }
-    return this.chatListItem.participants.find(p => p.userId !== this.userId)?.avatar ?? 'assets/img/user/user0.jpg';
+    return this.chatListItem?.otherUser?.avatar ?? 'assets/img/user/user0.jpg';
   }
 
   get messageContent(): string {
-    let messageToShow = this.chatListItem.lastMessage.content
+    let messageToShow = this.chatListItem.lastMessage.content;
     if(messageToShow.length>=20){
-      messageToShow = messageToShow.substring(0, 20) + '...';
+      messageToShow = messageToShow.substring(0, 18).trimEnd() + '...';
     }
     return messageToShow;
   }

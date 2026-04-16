@@ -55,20 +55,17 @@
     }
     .chat-body {
         border: 1px solid #F5F4F6;
-        transform: rotate(180deg);
+        // transform: none;
         overflow-y: scroll;
         border-top: none;
-        direction: rtl;
         height: 61vh;
 
         ul {
-            flex-direction: column-reverse;
-            justify-content: flex-end;
-            padding-right: 15px;
             display: flex;
+            flex-direction: column;
+            padding-right: 15px;
             
             li {
-                transform: rotate(180deg);
                 padding-left: 65px;
                 direction: ltr;
                 width: 80%;
@@ -242,112 +239,6 @@
             }
         }
     }
-    &.component-rtl-enabled {
-        .chat-header {
-            .user {
-                .active {
-                    padding: {
-                        left: 0;
-                        right: 16px;
-                    };
-                    &::before {
-                        left: auto;
-                        right: 0;
-                    }
-                }
-                .deactive {
-                    padding: {
-                        left: 0;
-                        right: 16px;
-                    };
-                    &::before {
-                        left: auto;
-                        right: 0;
-                    }
-                }
-            }
-            .info {
-                button {
-                    margin: {
-                        left: 10px;
-                        right: 0;
-                    };
-                    &:last-child {
-                        margin: {
-                            left: 0;
-                            right: 10px;
-                        };
-                    }
-                }
-            }
-        }
-        .chat-body {
-            ul {
-                padding: {
-                    right: 0;
-                    left: 15px;
-                };
-                li {
-                    margin-left: auto;
-                    padding: {
-                        left: 0;
-                        right: 65px;
-                    };
-                    .user {
-                        left: auto;
-                        right: 0;
-                    }
-                    .message {
-                        text-align: end;
-
-                        p {
-                            border-radius: 15px 0 15px 15px;
-                        }
-                    }
-                    &.right {
-                        text-align: start;
-                        margin: {
-                            left: 0;
-                            right: auto;
-                        };
-                        padding: {
-                            left: 65px;
-                            right: 0;
-                        };
-                        .user {
-                            left: 0;
-                            right: auto;
-                        }
-                        .message {
-                            text-align: start;
-                            
-                            p {
-                                border-radius: 0 15px 15px 15px;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        .chat-footer {
-            .list {
-                margin: {
-                    right: 10px;
-                    left: 25px;
-                };
-            }
-            form {
-                margin: {
-                    left: 70px;
-                    right: 0;
-                };
-                button {
-                    left: -50px;
-                    right: auto;
-                }
-            }
-        }
-    }
 }
 
 @media only screen and (max-width : 767px) {
@@ -417,40 +308,6 @@
                 button {
                     right: -30px;
                     font-size: 22px !important;
-                }
-            }
-        }
-        &.component-rtl-enabled {
-            .chat-body {
-                ul {
-                    padding-left: 0;
-                    
-                    li {
-                        margin-bottom: 15px;
-                        padding-right: 0;
-                        
-                        &.right {
-                            padding-left: 0;
-                        }
-                    }
-                }
-            }
-            .chat-footer {
-                .list {
-                    margin: {
-                        left: 0;
-                        right: 0;
-                    };
-                }
-                form {
-                    margin: {
-                        right: 0;
-                        left: 30px;
-                    };
-                    button {
-                        left: -30px;
-                        right: auto;
-                    }
                 }
             }
         }

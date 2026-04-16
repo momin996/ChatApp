@@ -1,8 +1,10 @@
 import { Component, EventEmitter, OnDestroy, OnInit, Output } from '@angular/core';
 import { FormControl } from '@angular/forms';
+import { Store } from '@ngrx/store';
 import { ContactService } from '../contact.service';
 import { ContactDto } from '../contact.type';
 import { Subject, debounceTime, distinctUntilChanged, finalize, takeUntil } from 'rxjs';
+import * as ChatActions from '../../chat/store/chat.actions';
 
 @Component({
     selector: 'app-contacts-dropdown',
@@ -10,8 +12,7 @@ import { Subject, debounceTime, distinctUntilChanged, finalize, takeUntil } from
     styleUrls: ['./contacts-dropdown.component.scss'],
 })
 export class ContactsDropdownComponent implements OnInit, OnDestroy {
-    @Output() contactSelected = new EventEmitter<ContactDto>();
-
+    @Output() closeMenu = new EventEmitter<void>();
     searchControl = new FormControl<string>('', { nonNullable: true });
 
     isLoading = false;
@@ -28,7 +29,10 @@ export class ContactsDropdownComponent implements OnInit, OnDestroy {
     private readonly destroy$ = new Subject<void>();
     private searchToken = 0;
 
-    constructor(private contactService: ContactService) {}
+    constructor(
+        private contactService: ContactService,
+        private store: Store,
+    ) {}
 
     ngOnInit(): void {
         this.resetAndLoad();
@@ -39,7 +43,7 @@ export class ContactsDropdownComponent implements OnInit, OnDestroy {
                 debounceTime(2000),
                 distinctUntilChanged(),
             )
-            .subscribe((value) => {
+            .subscribe((value: string) => {
                 this.searchTerm = (value ?? '').trim();
                 this.resetAndLoad();
             });
@@ -51,7 +55,8 @@ export class ContactsDropdownComponent implements OnInit, OnDestroy {
     }
 
     onContactClick(contact: ContactDto): void {
-        this.contactSelected.emit(contact);
+        this.store.dispatch(ChatActions.openConversationForContact({ contact }));
+        this.closeMenu.emit();
     }
 
     onScroll(container: HTMLElement): void {
@@ -124,7 +129,5 @@ export class ContactsDropdownComponent implements OnInit, OnDestroy {
         if (!this.hasMore) return;
         this.loadNextPage(this.searchToken);
     }
-
-
 }
 

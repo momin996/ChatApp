@@ -9,7 +9,6 @@ import { StoreDevtoolsModule } from '@ngrx/store-devtools';
 
 import { AppRoutingModule } from './app-routing.module';
 import { SharedModule } from './shared/shared.module';
-import { AppReducer } from './core/app-store/app.reducer';
 import { AuthEffects } from './auth/store/auth.effects';
 
 // Core Component Imports
@@ -18,16 +17,12 @@ import { HeaderComponent } from './core/components/header/header.component';
 import { FooterComponent } from './core/components/footer/footer.component';
 import { NotFoundComponent } from './core/components/not-found/not-found.component';
 import { InternalErrorComponent } from './core/components/internal-error/internal-error.component';
-import { AppEffects } from './core/app-store/app.effects';
-import { ChatComponent } from './chat/chat.component';
-import { ChatSidebarComponent } from './chat/chat-sidebar/chat-sidebar.component';
-import { ChatListItemComponent } from './chat/chat-sidebar/chat-list-item/chat-list-item.component';
-import { ConversationComponent } from './chat/conversation/conversation.component';
+
 import { AuthInterceptor } from './auth/interceptor/auth.interceptor';
-import { CreateContactComponent } from './contact/create-contact/create-contact.component';
-import { ContactsDropdownComponent } from './contact/contacts-dropdown/contacts-dropdown.component';
+
 import { MainLayoutComponent } from './core/components/main-layout/main-layout.component';
 import { AuthLayoutComponent } from './core/components/auth-layout/auth-layout.component';
+import { authReducer } from './auth/store/auth.reducers';
 
 
 @NgModule({
@@ -39,14 +34,6 @@ import { AuthLayoutComponent } from './core/components/auth-layout/auth-layout.c
         FooterComponent,
         NotFoundComponent,
         InternalErrorComponent,
-
-        ChatComponent,
-        ChatSidebarComponent,
-        ChatListItemComponent,
-        ConversationComponent,
-
-        CreateContactComponent,
-        ContactsDropdownComponent
     ],
     imports: [
         BrowserModule,
@@ -54,8 +41,14 @@ import { AuthLayoutComponent } from './core/components/auth-layout/auth-layout.c
         AppRoutingModule,
         SharedModule,
         BrowserAnimationsModule,
-        StoreModule.forRoot(AppReducer),
-        EffectsModule.forRoot([AppEffects, AuthEffects]),
+        StoreModule.forRoot({
+            auth: authReducer
+          }),
+          EffectsModule.forRoot([AuthEffects]),
+        // StoreModule.forRoot({}, {}),
+        // EffectsModule.forRoot([]),
+        // StoreModule.forRoot(AppReducer),
+        // EffectsModule.forRoot([AppEffects, AuthEffects, ChatEffects]),
         StoreDevtoolsModule.instrument({ maxAge: 25, logOnly: !isDevMode() }),
         
     ],

@@ -3,8 +3,6 @@ import { Action, createReducer, on } from "@ngrx/store";
 import { AuthState, TokenStatus } from "../models/auth-state.model";
 import * as AuthActions from './auth.actions';
 
-export const AUTH_FEATURE_KEY = 'auth';
-
 const initialAuthState: AuthState = {
     isAuthenticated: false,
     tokenStatus: TokenStatus.PENDING,
@@ -16,14 +14,15 @@ const initialAuthState: AuthState = {
 
 const reducer = createReducer(
     initialAuthState,
-    
     on(
         AuthActions.initAuthAction,
-        (state): AuthState => ({
-            ...state,
-            isLoading: true,
-            tokenStatus: TokenStatus.VALIDATING
-        })
+        (state): AuthState => {
+            return {
+                ...state,
+                isLoading: true,
+                tokenStatus: TokenStatus.VALIDATING
+            }
+        }
     ),
 
     on(
@@ -69,14 +68,15 @@ const reducer = createReducer(
           user: action.user,
         })
     ),
-
     on(
         AuthActions.authCompleteAction,
-        (state) : AuthState => ({
-            ...state,
-            isAuthenticated: true,
-            isLoading: false,
-        })
+        (state) : AuthState => {
+            return {
+                ...state,
+                isAuthenticated: true,
+                isLoading: false,
+            }
+        }
     ),
 
     on(
@@ -88,10 +88,8 @@ const reducer = createReducer(
     ),
 
     on(
-        AuthActions.logoutAction,
-        (state): AuthState => ({
-            ...initialAuthState
-        })
+        AuthActions.logoutCompleteAction,
+        (): AuthState => ({ ...initialAuthState })
     )
 )
 

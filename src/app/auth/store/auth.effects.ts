@@ -1,20 +1,18 @@
 import { Injectable } from "@angular/core";
 import { Actions, createEffect, ofType } from "@ngrx/effects";
-import { catchError, EMPTY, exhaustMap, filter, from, map, of, switchMap, take, tap } from "rxjs";
+import { catchError, exhaustMap, filter, from, map, of, switchMap, take, tap } from "rxjs";
 
 import { AuthService } from "../auth.service";
 import * as AuthActions from './auth.actions';
-import { ApiStringResp, AuthTokens } from "../models/auth-api.models";
-import { ShowAlertAction } from "src/app/core/app-store/app.actions";
 import { User } from "../models/user.model";
 import { SignalRService } from "src/app/signalr.service";
 import { TokenStorageService } from "../token-storage.service";
+import { AuthTokens } from "../models/auth-api.models";
 
 
 @Injectable()
 export class AuthEffects {
 
-    private isLoggingOut = false;
 
     constructor(
         private actions$: Actions,
@@ -104,8 +102,6 @@ export class AuthEffects {
                 return this.authService.getUser().pipe(
                     map((response: User) => {
                         if(response){
-                            console.log('Got user response', response);
-                            
                             return AuthActions.userSuccessAction({user: response});
                         }
                         return AuthActions.logoutAction();
@@ -125,12 +121,10 @@ export class AuthEffects {
             switchMap(() =>
                 from(this.signalRService.startConnection()).pipe(
                     switchMap(() => {
-                        console.log('inside start connection switchMap');
                         return this.signalRService.connectionReady$.pipe(
                             filter(ready => ready),
                             take(1),
                             map(() => {
-                                console.log('SignalR Hub Connected: ', this.signalRService.isHubConnected);
                                 return AuthActions.authCompleteAction();
                             })
                         )
@@ -139,40 +133,6 @@ export class AuthEffects {
             )
         )
     });
-
-    forgotPasswordRequest$ = createEffect(() => {
-        return this.actions$.pipe(
-            ofType(AuthActions.forgotPasswordRequestAction),
-            exhaustMap((action) => {
-                return this.authService.forgotPassword(action.email).pipe(
-                    map((response: ApiStringResp) => {
-                        return ShowAlertAction({message: response.message, alertType: 'pass'});
-                    }),
-                    catchError(err => of(ShowAlertAction({message: err.error.message, alertType: 'fail'})))
-                )
-                
-            })
-        );
-    });
-
-    resetPasswordRequest$ = createEffect(() => {
-        return this.actions$.pipe(
-            ofType(AuthActions.resetPasswordRequestAction),
-            exhaustMap((action) => {
-                return this.authService.resetPassword(action.resetPassword).pipe(
-                    switchMap((response: ApiStringResp) => {
-                        console.log(response);
-                        return of(
-                            ShowAlertAction({message: response.message, alertType: 'pass'}),
-                            // AuthActions.firstRouteAction({routeUrl: '/auth/login'})
-                        );
-                    }),
-                    catchError(err => of(ShowAlertAction({message: err.error.message, alertType: 'fail'})))
-                )
-                
-            })
-        );
-    });
     
 
     // Logout
@@ -180,12 +140,9 @@ export class AuthEffects {
         return this.actions$.pipe(
             ofType(AuthActions.logoutAction),
             exhaustMap(() => {      // Why exhaustMap? => Prevents multiple API calls
-                // Prevent duplicate logout execution
-                if (this.isLoggingOut) return EMPTY;
-                this.isLoggingOut = true;
-
                 return this.authService.logout().pipe(
                     catchError(() => of(null)), // ignore API failure
+                    switchMap(() => from(this.signalRService.stopConnection())),
                     map(() => AuthActions.logoutCompleteAction())
                 );
             })
@@ -196,11 +153,7 @@ export class AuthEffects {
         () => {
             return this.actions$.pipe(
                 ofType(AuthActions.logoutCompleteAction),
-                tap(() => {
-                    this.tokenStorage.clearTokens();
-                    this.signalRService.stopConnection();
-                    this.isLoggingOut = false;
-                })
+                tap(() => this.tokenStorage.clearTokens())
             );
         },
         { dispatch: false }
