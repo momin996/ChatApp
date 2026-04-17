@@ -32,4 +32,8 @@ export class AppConfigService {
   getAuthSecretKeys(): AuthKeys {
     return Environment?.auth;
   }
+
+  get signalRUrl(): string {
+    return Environment.signalRUrl;
+  }
 }

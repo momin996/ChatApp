@@ -1,27 +1,20 @@
-import { Component, HostListener } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { ToggleService } from './toggle.service';
 import { CustomizerSettingsService } from '../../services/customizer-settings.service';
 import { AuthFacade } from 'src/app/auth/auth.facade';
+import { User } from "src/app/auth/models/user.model";
 
 @Component({
     selector: 'app-header',
     templateUrl: './header.component.html',
     styleUrls: ['./header.component.scss']
 })
-export class HeaderComponent {
+export class HeaderComponent implements OnInit{
 
     isSticky: boolean = false;
-    @HostListener('window:scroll', ['$event'])
-    checkScroll() {
-        const scrollPosition = window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0;
-        if (scrollPosition >= 50) {
-            this.isSticky = true;
-        } else {
-            this.isSticky = false;
-        }
-    }
 
     isToggled = false;
+    user: User;
     
     constructor(
         private toggleService: ToggleService,
@@ -30,6 +23,12 @@ export class HeaderComponent {
     ) {
         this.toggleService.isToggled$.subscribe(isToggled => {
             this.isToggled = isToggled;
+        });
+    }
+
+    ngOnInit(): void {
+        this.authFacade.getUser().subscribe(user => {
+            if(user!=null) this.user=user;
         });
     }
 

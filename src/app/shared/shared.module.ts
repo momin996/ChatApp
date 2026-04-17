@@ -42,20 +42,9 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatTreeModule } from '@angular/material/tree';
 
 // Misc Imports
-import { NgApexchartsModule } from 'ng-apexcharts';
 import { NgScrollbarModule } from 'ngx-scrollbar';
-import { NgChartsModule } from 'ng2-charts';
-import { NgxEditorModule } from 'ngx-editor';
-import { NgxEchartsModule } from 'ngx-echarts';
-import { NgxGaugeModule } from 'ngx-gauge';
-import { NgxMatTimepickerModule } from 'ngx-mat-timepicker';
-import { NgxDropzoneModule } from 'ngx-dropzone';
-import { CarouselModule } from 'ngx-owl-carousel-o';
 import { CdkAccordionModule } from '@angular/cdk/accordion';
-import { ColorPickerModule } from 'ngx-color-picker';
 import { DragDropModule } from '@angular/cdk/drag-drop';
-import { FullCalendarModule } from '@fullcalendar/angular';
-import { QuillModule } from 'ngx-quill';
 
 
 
@@ -102,18 +91,9 @@ const MaterialModules = [
 const MiscLibraryModule = [
   FormsModule,
   ReactiveFormsModule,
-  NgApexchartsModule,
   NgScrollbarModule,
-  NgChartsModule,
-  NgxEditorModule,
-  NgxGaugeModule,
-  NgxMatTimepickerModule,
-  NgxDropzoneModule,
-  CarouselModule,
   CdkAccordionModule,
-  ColorPickerModule,
-  DragDropModule,
-  FullCalendarModule,
+  DragDropModule
 ]
 
 @NgModule({
@@ -121,22 +101,13 @@ const MiscLibraryModule = [
   ],
   imports: [
     CommonModule,
-    
     ...MaterialModules,
-
-    
     ...MiscLibraryModule,
-    NgxEchartsModule.forRoot({
-        echarts: () => import('echarts')
-    }),
-    QuillModule.forRoot(),
   ],
   exports: [
     CommonModule,
     ...MaterialModules,
     ...MiscLibraryModule,
-    NgxEchartsModule,
-    QuillModule,
   ],
   providers: [
     DatePipe

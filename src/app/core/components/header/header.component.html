@@ -1,17 +1,15 @@
 <header
-    class="header-area bg-white border-bottom-radius box-shadow mb-25"
+    class="header-area bg-white border-bottom-radius box-shadow mb-12"
     [ngClass]="{'active': isToggled, 'sticky': isSticky}"
     [class.component-dark-theme]="themeService.isDark()"
-    [class.right-sidebar]="themeService.isRightSidebar()"
-    [class.hide-sidebar]="themeService.isHideSidebar()"
     [class.dark-header]="themeService.isHeaderDark()"
     [class.card-borderd-theme]="themeService.isCardBorder()"
     [class.card-border-radius]="themeService.isCardBorderRadius()"
-    [class.rtl-enabled]="themeService.isRTLEnabled()"
+    *ngIf="user"
 >
     <div class="d-md-flex align-items-center justify-content-space-between">
         <div class="header-left-side d-flex align-items-center">
-            <mat-slide-toggle hideIcon (click)="toggleTheme()" [checked]="themeService.isDark()">Dark Mode</mat-slide-toggle>
+            <mat-slide-toggle (click)="toggleTheme()" hideIcon [checked]="themeService.isDark()">Dark Mode</mat-slide-toggle>
         </div>
         <ul class="header-right-side d-flex align-items-center mt-0 mb-0">
             <li>
@@ -19,8 +17,8 @@
             </li>
             <li>
                 <button mat-icon-button [matMenuTriggerFor]="profileMenu" class="profile-btn main-color border-none bg-transparent position-relative">
-                    <img src="assets/img/admin.jpg" class="rounded-circle" alt="admin">
-                    <span class="fw-semibold">Adison Jack</span>
+                    <img src="{{user.avatar}}" class="rounded-circle" alt="admin">
+                    <span class="fw-semibold">{{user.firstName}} {{user.lastName}}</span>
                 </button>
                 <mat-menu class="profile-menu-dropdown" #profileMenu="matMenu" xPosition="before">
                     <ul class="m-0">

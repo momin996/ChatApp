@@ -1,0 +1,86 @@
+<mat-card
+    
+    class="p-0 chat-box tagus-card"
+    [class.component-dark-theme]="themeService.isDark()"
+>
+    <mat-card-content *ngIf="chat !=null">
+        <div class="chat-header p-15 d-md-flex align-items-center justify-content-space-between">
+            <div class="user d-flex align-items-center">
+                <img
+                    [src]="chatImage"
+                    width="50"
+                    class="rounded-circle"
+                    alt="user"
+                >
+                <div class="ms-12">
+                    <h5 class="fs-16 mb-4">{{ chatName }}</h5>
+                    <span class="d-block active position-relative muted-color fs-14">Active now</span>
+                    <!-- <span class="d-block deactive position-relative muted-color fs-14">Active now</span> -->
+                </div>
+            </div>
+            <div class="info">
+                <button mat-icon-button>
+                    <i class="ri-vidicon-line"></i>
+                </button>
+                <button mat-icon-button>
+                    <i class="ri-phone-line"></i>
+                </button>
+                <button mat-icon-button [matMenuTriggerFor]="menu">
+                    <i class="ri-more-2-fill"></i>
+                </button>
+                <mat-menu #menu="matMenu" class="dotMenu monthMenu" xPosition="before">
+                    <button mat-menu-item type="button" class="bg-transparent border-none position-relative">
+                        <i class="ri-volume-mute-line"></i> Mute Chat
+                    </button>
+                    <button mat-menu-item type="button" class="bg-transparent border-none position-relative">
+                        <i class="ri-delete-bin-6-line"></i> Delete
+                    </button>
+                    <button mat-menu-item type="button" class="bg-transparent border-none position-relative">
+                        <i class="ri-chat-off-line"></i> Block
+                    </button>
+                </mat-menu>
+            </div>
+        </div>
+        <div class="chat-body p-15" #chatBody (scroll)="onScroll()">
+            <ul class="ps-0 list-unstyled mb-0 mt-0">
+                <li *ngFor="let message of messages; trackBy: trackByMessageId" class="position-relative" [ngClass]="{'right': isMessageByMe(message.messageBy.userId)}">
+                    <img src="{{message.messageBy.avatar}}" width="50" class="rounded-circle user" alt="user">
+                    <div class="message">
+                        <div>
+                            <p>{{ message.content }}</p>
+                        </div>
+                    </div>
+                    <span 
+                        class="time d-block muted-color mt-8 fs-14"
+                        [ngClass]="{'text-start': !isMessageByMe(message.messageBy.userId)}"
+                    >
+                        {{message.timestamp | date: 'shortTime'}}
+                        <span
+                            *ngIf="isMessageByMe(message.messageBy.userId)"
+                            class="lh-1 ps-5"
+                            [ngClass]="{'main-color': isMessageSeen(message.messageStatuses) && isMessageDelivered(message.messageStatuses)}"
+                        >
+                            <i *ngIf="isMessageDelivered(message.messageStatuses)" class="ri-check-double-line"></i>
+                            <i *ngIf="!isMessageDelivered(message.messageStatuses) && !isMessageSeen(message.messageStatuses)" class="ri-check-line"></i>
+                        </span>
+                    </span>
+                    
+                </li>
+            </ul>
+        </div>
+        <div class="chat-footer p-15 d-md-flex align-items-center">
+            <div class="list">
+                <button mat-icon-button>
+                    <i class="ri-emotion-line"></i>
+                </button>
+                <button mat-icon-button>
+                    <i class="ri-link-m"></i>
+                </button>
+            </div>
+            <form class="position-relative" (ngSubmit)="onSubmit()" #chatForm="ngForm">
+                <input type="text" class="input-text" placeholder="Type Something..." [(ngModel)]="messageContent" name="messageContent" required>
+                <button type="submit" [disabled]="chatForm.invalid"><i class="ri-send-plane-fill"></i></button>
+            </form>
+        </div>
+    </mat-card-content>
+</mat-card>

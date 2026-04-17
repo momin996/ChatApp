@@ -26,7 +26,7 @@ export class ForgotPasswordComponent {
             const email = this.forgotPasswordForm.value.email;
             if(email!=null){
                 console.log('Sending forgot password request');
-                this.authFacade.forgotPassword(email);
+                // this.authFacade.forgotPassword(email);
                 
             }
         }

@@ -118,27 +118,6 @@
         border-radius: 0 !important;
     }
 }
-.component-rtl-enabled {
-    .tagus-form {
-        .login-with-socials {
-            .mdc-button {
-                padding: {
-                    left: 25px !important;
-                    right: 60px !important;
-                };
-                img {
-                    margin: {
-                        left: 0;
-                        right: -35px;
-                    };
-                }
-            }
-        }
-        .me-30 {
-            margin-right: 0 !important;
-        }
-    }
-}
 
 @media only screen and (max-width : 767px) {
 

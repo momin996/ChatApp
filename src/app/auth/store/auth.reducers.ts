@@ -3,19 +3,28 @@ import { Action, createReducer, on } from "@ngrx/store";
 import { AuthState, TokenStatus } from "../models/auth-state.model";
 import * as AuthActions from './auth.actions';
 
-export const AUTH_FEATURE_KEY = 'auth';
-
 const initialAuthState: AuthState = {
     isAuthenticated: false,
     tokenStatus: TokenStatus.PENDING,
     isLoading: false,
     isError: false,
-    error: null
+    error: null,
+    user: null
 }
 
 const reducer = createReducer(
     initialAuthState,
-    
+    on(
+        AuthActions.initAuthAction,
+        (state): AuthState => {
+            return {
+                ...state,
+                isLoading: true,
+                tokenStatus: TokenStatus.VALIDATING
+            }
+        }
+    ),
+
     on(
         AuthActions.loginRequestAction,
         AuthActions.refreshTokenRequestAction,
@@ -27,12 +36,14 @@ const reducer = createReducer(
     ),
 
     on(
+        AuthActions.validTokenAction,
         AuthActions.loginSuccessAction,
         AuthActions.refreshTokenSuccessAction,
-        (state, action): AuthState => ({
+        (state): AuthState => ({
           ...state,
-          isAuthenticated: true,
-          isLoading: false,
+          isAuthenticated: false,
+        //   isAuthenticated: true,
+        //   isLoading: false,
           tokenStatus: TokenStatus.VALID,
         })
     ),
@@ -51,10 +62,34 @@ const reducer = createReducer(
     ),
 
     on(
-        AuthActions.logoutAction,
-        (state): AuthState => ({
-            ...initialAuthState
+        AuthActions.userSuccessAction,
+        (state, action): AuthState => ({
+          ...state,
+          user: action.user,
         })
+    ),
+    on(
+        AuthActions.authCompleteAction,
+        (state) : AuthState => {
+            return {
+                ...state,
+                isAuthenticated: true,
+                isLoading: false,
+            }
+        }
+    ),
+
+    on(
+        AuthActions.userFailureAction,
+        (_, action): AuthState => ({
+            ...initialAuthState,
+            error: action.error
+        })
+    ),
+
+    on(
+        AuthActions.logoutCompleteAction,
+        (): AuthState => ({ ...initialAuthState })
     )
 )
 

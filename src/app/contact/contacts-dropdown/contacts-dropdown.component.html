@@ -1,0 +1,55 @@
+<div class="contacts-dropdown" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
+    <div class="contacts-dropdown__search" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
+        <mat-form-field appearance="outline" class="w-100">
+            <mat-label>Search contacts</mat-label>
+            <input matInput cdkFocusInitial [formControl]="searchControl" placeholder="username, email..." />
+            <button
+                *ngIf="searchControl.value"
+                mat-icon-button
+                matSuffix
+                type="button"
+                aria-label="Clear search"
+                (click)="searchControl.setValue('')"
+            >
+                <mat-icon>close</mat-icon>
+            </button>
+        </mat-form-field>
+    </div>
+
+    <div class="contacts-dropdown__body" #scrollContainer (scroll)="onScroll(scrollContainer)">
+        <ng-container *ngIf="!isLoading; else loadingTpl">
+            <div *ngIf="visibleContacts.length === 0" class="contacts-dropdown__empty">
+                No contacts found
+            </div>
+
+            <button
+                type="button"
+                class="contacts-dropdown__item"
+                *ngFor="let c of visibleContacts; trackBy: trackByContactId"
+                (click)="onContactClick(c)"
+            >
+                <span class="contacts-dropdown__avatar" [class.has-image]="!!c.avatar">
+                    <img *ngIf="c.avatar" [src]="c.avatar" alt="" />
+                    <span *ngIf="!c.avatar">{{ (c.firstName[0] || c.lastName[0] || '?') | uppercase }}</span>
+                </span>
+
+                <span class="contacts-dropdown__meta">
+                    <span class="contacts-dropdown__name">
+                        {{ c.firstName }} {{ c.lastName }}
+                    </span>
+                    <span class="contacts-dropdown__sub muted-color">
+                        {{ c.about || 'Contact' }}
+                    </span>
+                </span>
+            </button>
+        </ng-container>
+
+        <ng-template #loadingTpl>
+            <div class="contacts-dropdown__loading">
+                <mat-spinner diameter="24"></mat-spinner>
+                <span>Loading contacts…</span>
+            </div>
+        </ng-template>
+    </div>
+</div>
+

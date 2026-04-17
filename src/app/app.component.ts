@@ -3,6 +3,7 @@ import { Router } from '@angular/router';
 import { CustomizerSettingsService } from './core/services/customizer-settings.service';
 import { ToggleService } from './core/components/header/toggle.service';
 import { AuthFacade } from './auth/auth.facade';
+import { pairwise, filter } from 'rxjs';
 
 @Component({
     selector: 'app-root',
@@ -29,8 +30,26 @@ export class AppComponent implements OnInit {
     }
 
     ngOnInit(): void {
-        this.authFacade.isAuthenticated().subscribe(isAuthenticated => this.isLoggedIn=isAuthenticated);
-        this.authFacade.isLoading().subscribe(isLoading => this.isLoadingComplete = !isLoading);
+
+        this.authFacade.init();
+
+        const isAuth$ = this.authFacade.isAuthenticated();
+
+        // Track auth state for UI
+        isAuth$.subscribe(isAuthenticated => this.isLoggedIn = isAuthenticated);
+
+        this.authFacade.isLoading()
+            .subscribe(isLoading => this.isLoadingComplete = !isLoading);
+        
+        // Detect logout transition (true → false)
+        isAuth$
+            .pipe(
+                pairwise(),
+                filter(([prev, curr]) => prev === true && curr === false)
+            )
+            .subscribe(() => {
+                this.router.navigate(['/auth/logout']);
+            });
     }
 
     toggleTheme() {
